@@ -1,7 +1,7 @@
 ![alt text](https://raw.githubusercontent.com/cloudera/hue/master/docs/images/hue_logo.png "Hue Logo")
 
 
-Query. Explore. Repeat.
+Query. Explore. Repeat.f
 -----------------------
 
 Hue is an open source SQL Workbench for browsing, querying and visualizing data in cloud/on-prem Data Warehouses: [gethue.com](http://gethue.com)
