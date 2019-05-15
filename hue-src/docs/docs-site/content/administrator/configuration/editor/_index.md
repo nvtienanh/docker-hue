@@ -237,6 +237,8 @@ Then give Hue the information about the database source:
 The dialect should be added to the Python system or Hue Python virtual environment:
 
       ./build/env/bin/pip install psycopg2
+      or
+      ./build/env/bin/pip install psycopg2-binary
 
 Then give Hue the information about the database source:
 
@@ -578,7 +580,7 @@ In the `[[interpreters]]` section:
             name=PySpark
             interface=livy
 
-      [[[sparksql]]]
+      [[[sql]]]
             name=SparkSql
             interface=livy
 
@@ -596,6 +598,29 @@ In the `[spark]` section:
       # The Livy Server URL.
       livy_server_url=http://localhost:8998
 
+And if using Cloudera distribution, make sure you have notebooks enabled:
+
+    [desktop]
+      app_blacklist=
+
+    [notebook]
+      show_notebooks=true
+
+**YARN: Spark session could not be created**
+
+If seeing an error similar to this with `primitiveMkdir`:
+
+    The Spark session could not be created in the cluster: at org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invokeMethod(RetryInvocationHandler.java:165)
+    at org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invoke(RetryInvocationHandler.java:157)
+    at org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invokeOnce(RetryInvocationHandler.java:95)
+    at org.apache.hadoop.io.retry.RetryInvocationHandler.invoke(RetryInvocationHandler.java:359) at com.sun.proxy.$Proxy10.mkdirs(Unknown Source)
+    at org.apache.hadoop.hdfs.DFSClient.primitiveMkdir(DFSClient.java:2333) ... 20 more
+    19/05/13 12:27:07 INFO util.ShutdownHookManager: Shutdown hook called 19/05/13 12:27:07 INFO util.ShutdownHookManager:
+    Deleting directory /tmp/spark-0d045154-77a0-4e12-94b2-2df18725a4ae YARN Diagnostics:
+
+Does your logged-in user have a home dir on HDFS (i.e. `/user/bob`)? (you should see the full error in the Livy or YARN logs).
+
+In Hue admin for you user, you can click the 'Create home' checkbox and save.
 
 **CSRF**
 
