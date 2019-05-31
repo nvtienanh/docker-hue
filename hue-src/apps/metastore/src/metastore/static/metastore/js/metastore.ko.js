@@ -63,8 +63,7 @@ var MetastoreViewModel = (function () {
 
     huePubSub.publish('cluster.config.get.config', function (clusterConfig) {
       var initialSourceType = options.sourceType || 'hive';
-      if (clusterConfig && clusterConfig.app_config && (
-          (clusterConfig.app_config.editor && clusterConfig.app_config.editor.interpreters) || clusterConfig.app_config.catalogs)) {
+      if (clusterConfig && clusterConfig.app_config && clusterConfig.app_config.editor && clusterConfig.app_config.editor.interpreters) {
         var sources = [];
         clusterConfig.app_config.editor.interpreters.forEach(function (interpreter) {
           if (interpreter.is_sql) {
@@ -74,13 +73,6 @@ var MetastoreViewModel = (function () {
               type: interpreter.type
             }))
           }
-        });
-        clusterConfig.app_config.catalogs.forEach(function (interpreter) {
-          sources.push(new MetastoreSource({
-            metastoreViewModel: self,
-            name: interpreter.name,
-            type: interpreter.type
-          }))
         });
         if (!sources.length) {
           sources.push(new MetastoreSource({

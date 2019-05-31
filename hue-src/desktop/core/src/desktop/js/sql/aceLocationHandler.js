@@ -1320,7 +1320,7 @@ class AceLocationHandler {
         if (statementDetails.id !== self.editorId) {
           return;
         }
-        if (self.snippet.isSqlDialect()) {
+        if (self.snippet.type() === 'hive' || self.snippet.type() === 'impala') {
           if (lastContextRequest) {
             lastContextRequest.dispose();
           }

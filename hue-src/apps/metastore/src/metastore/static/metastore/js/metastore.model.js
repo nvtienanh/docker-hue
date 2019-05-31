@@ -135,7 +135,7 @@ var MetastoreSource = (function () {
           if (database.catalogEntry === refreshedEntry) {
             database.load(function () {
               setState(previousState);
-            }, self.metastoreViewModel.optimizerEnabled(), self.metastoreViewModel.navigatorEnabled());
+            }, self.optimizerEnabled(), self.navigatorEnabled());
             return true;
           }
         })
@@ -255,8 +255,8 @@ var MetastoreNamespace = (function () {
 
   MetastoreNamespace.prototype.reload = function () {
     var self = this;
-    if (!self.loadingDatabases() && self.catalogEntry()) {
-      self.loadingDatabases(true);
+    if (!self.reloading() && self.catalogEntry()) {
+      self.reloading(true);
       // Clear will publish when done
       self.catalogEntry().clearCache({ invalidate: self.sourceType === 'impala' ? 'invalidate' : 'cache' });
     }

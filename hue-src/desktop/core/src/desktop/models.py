@@ -41,7 +41,6 @@ from settings import HUE_DESKTOP_VERSION
 from aws.conf import is_enabled as is_s3_enabled, has_s3_access
 from azure.conf import is_adls_enabled, has_adls_access
 from dashboard.conf import get_engines, HAS_REPORT_ENABLED
-from hadoop.conf import has_hdfs_enabled
 from kafka.conf import has_kafka
 from notebook.conf import SHOW_NOTEBOOKS, get_ordered_interpreters
 
@@ -1565,7 +1564,7 @@ class ClusterConfig():
   """
   Configuration of the apps and engines that each individual user sees on the core Hue.
   Fine grained Hue permissions and available apps are leveraged here in order to render the correct UI.
-
+  
   TODO: rename to HueConfig
   TODO: get list of contexts dynamically
   """
@@ -1609,7 +1608,6 @@ class ClusterConfig():
     apps = OrderedDict([app for app in [
       ('editor', self._get_editor()),
       ('dashboard', self._get_dashboard()),
-      ('catalogs', self._get_catalogs()),
       ('browser', self._get_browser()),
       ('scheduler', self._get_scheduler()),
       ('sdkapps', self._get_sdk_apps()),
@@ -1665,16 +1663,15 @@ class ClusterConfig():
       _interpreters = [interpreter for interpreter in _interpreters if interpreter['type'] in ('impala')] #, 'hive', 'spark2', 'pyspark', 'mapreduce')]
 
     for interpreter in _interpreters:
-      if interpreter['interface'] != 'hms':
-        interpreters.append({
-          'name': interpreter['name'],
-          'type': interpreter['type'],
-          'displayName': interpreter['name'],
-          'buttonName': _('Query'),
-          'tooltip': _('%s Query') % interpreter['type'].title(),
-          'page': '/editor/?type=%(type)s' % interpreter,
-          'is_sql': interpreter['is_sql'],
-        })
+      interpreters.append({
+        'name': interpreter['name'],
+        'type': interpreter['type'],
+        'displayName': interpreter['name'],
+        'buttonName': _('Query'),
+        'tooltip': _('%s Query') % interpreter['type'].title(),
+        'page': '/editor/?type=%(type)s' % interpreter,
+        'is_sql': interpreter['is_sql']
+      })
 
     if SHOW_NOTEBOOKS.get() and ANALYTIC_DB not in self.cluster_type:
       try:
@@ -1688,7 +1685,7 @@ class ClusterConfig():
         'buttonName': _('Notebook'),
         'tooltip': _('Notebook'),
         'page': '/notebook',
-        'is_sql': False,
+        'is_sql': False
       })
 
     if interpreters:
@@ -1703,26 +1700,6 @@ class ClusterConfig():
       }
     else:
       return None
-
-  def _get_catalogs(self):
-    interpreters = []
-
-    _interpreters = get_ordered_interpreters(self.user)
-
-    for interpreter in _interpreters:
-      if interpreter['interface'] == 'hms':
-        interpreters.append({
-          'name': interpreter['name'],
-          'type': interpreter['type'],
-          'displayName': interpreter['name'],
-          'buttonName': _('Query'),
-          'tooltip': _('%s Query') % interpreter['type'].title(),
-          'page': '/editor/?type=%(type)s' % interpreter,
-          'is_sql': interpreter['is_sql'],
-          'is_catalog': interpreter['is_catalog'],
-        })
-
-    return interpreters if interpreters else None
 
   def _get_dashboard(self):
     interpreters = get_engines(self.user)
@@ -1762,7 +1739,7 @@ class ClusterConfig():
   def _get_browser(self):
     interpreters = []
 
-    if has_hdfs_enabled() and 'filebrowser' in self.apps and ANALYTIC_DB not in self.cluster_type:
+    if 'filebrowser' in self.apps and ANALYTIC_DB not in self.cluster_type:
       interpreters.append({
         'type': 'hdfs',
         'displayName': _('Files'),
@@ -1771,7 +1748,7 @@ class ClusterConfig():
         'page': '/filebrowser/' + (not self.user.is_anonymous() and 'view=' + self.user.get_home_directory() or '')
       })
 
-    if is_s3_enabled() and 'filebrowser' in self.apps and has_s3_access(self.user) and not IS_EMBEDDED.get():
+    if is_s3_enabled() and has_s3_access(self.user) and not IS_EMBEDDED.get():
       interpreters.append({
         'type': 's3',
         'displayName': _('S3'),
@@ -1780,7 +1757,7 @@ class ClusterConfig():
         'page': '/filebrowser/view=S3A://'
       })
 
-    if is_adls_enabled() and 'filebrowser' in self.apps and has_adls_access(self.user) and ANALYTIC_DB not in self.cluster_type:
+    if is_adls_enabled() and has_adls_access(self.user) and ANALYTIC_DB not in self.cluster_type:
       interpreters.append({
         'type': 'adls',
         'displayName': _('ADLS'),
@@ -1961,7 +1938,7 @@ def _get_apps(user, section=None):
     apps = apps_list.values()
     for app in apps:
       if app.display_name not in [
-          'beeswax', 'hive', 'impala', 'pig', 'jobsub', 'jobbrowser', 'metastore', 'hbase', 'sqoop', 'oozie', 'filebrowser',
+          'beeswax', 'impala', 'pig', 'jobsub', 'jobbrowser', 'metastore', 'hbase', 'sqoop', 'oozie', 'filebrowser',
           'useradmin', 'search', 'help', 'about', 'zookeeper', 'proxy', 'rdbms', 'spark', 'indexer', 'security', 'notebook'] and app.menu_index != -1:
         other_apps.append(app)
       if section == app.display_name:

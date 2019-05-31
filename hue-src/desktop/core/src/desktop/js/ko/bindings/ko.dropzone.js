@@ -109,6 +109,10 @@ ko.bindingHandlers.dropzone = {
 
     $(element).addClass('dropzone');
 
+    $(element).on('click', e => {
+      e.stopPropagation();
+    });
+
     new Dropzone(element, options);
   }
 };

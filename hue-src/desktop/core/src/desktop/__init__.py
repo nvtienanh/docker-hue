@@ -22,6 +22,3 @@ from desktop.supervisor import DjangoCommandSupervisee
 
 SUPERVISOR_SPEC = DjangoCommandSupervisee(
   "runcpserver", drop_root=False)
-
-SUPERVISOR_CELERY_SPEC = DjangoCommandSupervisee(
-  "runcelery", drop_root=False)

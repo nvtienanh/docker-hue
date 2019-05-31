@@ -5,9 +5,10 @@ weight = 1
 chapter = false
 pre = "<b>1. </b>"
 +++
-![Hue Logo Back-end]({{% param baseURL %}}images/hue_logo.png)
 
-<span style="font-size:52px; text-align:center; display: block">Documentation</span>
+# Documentation
+
+![Hue Logo Back-end]({{% param baseURL %}}images/hue_logo.png)
 
 The manual to install, use and develop Hue.
 

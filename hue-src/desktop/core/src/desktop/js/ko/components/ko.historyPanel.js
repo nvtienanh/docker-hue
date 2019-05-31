@@ -279,7 +279,7 @@ class HistoryPanel {
 
         // Add to history
         notebook.history.unshift(
-          notebook.makeHistoryRecord(
+          notebook._makeHistoryRecord(
             notebook.onSuccessUrl(),
             notebook.description(),
             new Date().getTime(),

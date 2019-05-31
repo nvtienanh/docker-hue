@@ -27,23 +27,24 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from desktop.api2 import __paginate
-from desktop.conf import IS_K8S_ONLY, TASK_SERVER
+from desktop.conf import IS_K8S_ONLY
 from desktop.lib.i18n import smart_str
 from desktop.lib.django_util import JsonResponse
 from desktop.models import Document2, Document
 from indexer.file_format import HiveFormat
 from indexer.fields import Field
 
-from notebook.connectors.base import Notebook, QueryExpired, SessionExpired, QueryError, _get_snippet_name
+from notebook.connectors.base import get_api, Notebook, QueryExpired, SessionExpired, QueryError, _get_snippet_name
 from notebook.connectors.dataeng import DataEngApi
 from notebook.connectors.hiveserver2 import HS2Api
 from notebook.connectors.oozie_batch import OozieApi
 from notebook.decorators import api_error_handler, check_document_access_permission, check_document_modify_permission
 from notebook.models import escape_rows, make_notebook
-from notebook.views import upgrade_session_properties, get_api
+from notebook.views import upgrade_session_properties
 
 
 LOG = logging.getLogger(__name__)
+
 
 DEFAULT_HISTORY_NAME = ''
 
@@ -123,16 +124,11 @@ def _execute_notebook(request, notebook, snippet):
 
   try:
     try:
-      session = notebook.get('sessions') and notebook['sessions'][0] # Session reference for snippet execution without persisting it
       if historify:
         history = _historify(notebook, request.user)
         notebook = Notebook(document=history).get_data()
 
-      interpreter = get_api(request, snippet)
-      if snippet.get('interface') == 'sqlalchemy':
-        interpreter.options['session'] = session
-
-      response['handle'] = interpreter.execute(notebook, snippet)
+      response['handle'] = get_api(request, snippet).execute(notebook, snippet)
 
       # Retrieve and remove the result from the handle
       if response['handle'].get('sync'):
@@ -322,9 +318,9 @@ def get_logs(request):
   jobs = db.get_jobs(notebook, snippet, full_log)
 
   response['logs'] = logs.strip()
-  response['progress'] = min(db.progress(notebook, snippet, logs=full_log), 99) if snippet['status'] != 'available' and snippet['status'] != 'success' else 100
+  response['progress'] = min(db.progress(snippet, full_log), 99) if snippet['status'] != 'available' and snippet['status'] != 'success' else 100
   response['jobs'] = jobs
-  response['isFullLogs'] = db.get_log_is_full_log(notebook, snippet)
+  response['isFullLogs'] = isinstance(db, (OozieApi, DataEngApi))
   response['status'] = 0
 
   return JsonResponse(response)
@@ -381,7 +377,7 @@ def save_notebook(request):
 
 
 def _clear_sessions(notebook):
-  notebook['sessions'] = [_s for _s in notebook['sessions'] if _s['type'] in ('scala', 'spark', 'pyspark', 'sparkr', 'r')]
+  notebook['sessions'] = [_s for _s in notebook['sessions'] if _s['type'] in ('scala', 'spark', 'pyspark', 'sparkr')]
 
 
 def _historify(notebook, user):
@@ -524,7 +520,7 @@ def close_notebook(request):
 
   notebook = json.loads(request.POST.get('notebook', '{}'))
 
-  for session in [_s for _s in notebook['sessions'] if _s['type'] in ('scala', 'spark', 'pyspark', 'sparkr', 'r')]:
+  for session in [_s for _s in notebook['sessions'] if _s['type'] in ('scala', 'spark', 'pyspark', 'sparkr')]:
     try:
       response['result'].append(get_api(request, session).close_session(session))
     except QueryExpired:
@@ -535,7 +531,7 @@ def close_notebook(request):
   for snippet in [_s for _s in notebook['snippets'] if _s['type'] in ('hive', 'impala')]:
     try:
       if snippet['status'] != 'running':
-        response['result'].append(get_api(request, snippet).close_statement(notebook, snippet))
+        response['result'].append(get_api(request, snippet).close_statement(snippet))
       else:
         LOG.info('Not closing SQL snippet as still running.')
     except QueryExpired:
@@ -559,7 +555,7 @@ def close_statement(request):
   snippet = json.loads(request.POST.get('snippet', '{}'))
 
   try:
-    response['result'] = get_api(request, snippet).close_statement(notebook, snippet)
+    response['result'] = get_api(request, snippet).close_statement(snippet)
   except QueryExpired:
     pass
 
@@ -832,17 +828,3 @@ def _get_statement_from_file(user, fs, snippet):
     script_path = script_path.replace('hdfs://', '')
     if fs.do_as_user(user, fs.isfile, script_path):
       return fs.do_as_user(user, fs.read, script_path, 0, 16 * 1024 ** 2)
-
-
-@require_POST
-@api_error_handler
-def describe(request, database, table=None, column=None):
-  response = {'status': -1, 'message': ''}
-  notebook = json.loads(request.POST.get('notebook', '{}'))
-  source_type = request.POST.get('source_type', '')
-  snippet = {'type': source_type}
-
-  describe = get_api(request, snippet).describe(notebook, snippet, database, table, column=column)
-  response.update(describe)
-
-  return JsonResponse(response)

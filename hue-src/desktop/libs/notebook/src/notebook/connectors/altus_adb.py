@@ -57,7 +57,7 @@ class AltusAdbApi(Api):
     return HueQuery(self.user, cluster_crn=self.cluster_name).do_fetch_result(handle)
 
 
-  def close_statement(self, notebook, snippet):
+  def close_statement(self, snippet):
     return {'status': -1}
 
 
@@ -67,6 +67,10 @@ class AltusAdbApi(Api):
 
   def get_log(self, notebook, snippet, startFrom=0, size=None):
     return '...'
+
+
+  def progress(self, snippet, logs):
+    return 50
 
 
   def get_jobs(self, notebook, snippet, logs):

@@ -22,7 +22,7 @@ import huePubSub from 'utils/huePubSub';
 ko.bindingHandlers.aceResizer = {
   init: function(element, valueAccessor) {
     const options = ko.unwrap(valueAccessor());
-    const ace = options.snippet.ace.bind(options.snippet);
+    const ace = options.snippet.ace;
     const $target = $(options.target);
     const $resizer = $(element);
     const $contentPanel = $('.content-panel');

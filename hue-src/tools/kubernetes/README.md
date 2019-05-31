@@ -9,12 +9,10 @@ Assuming you have a Kubernetes cluster configured with Helm installed and images
 
 * [Helm](helm)
    * [Hue](helm/hue)
-* [YAML](yaml)
-   * [Hue](yaml/hue)
-   * Postgres (TBD)
+* YAML
+   * Hue (TBD)
    * NGINX (TBD)
-   * Celery (TBD)
-   * Daphne (TBD)
+   * Task Server (TBD)
 * [Container Images](/tools/docker)
    * [Hue](/tools/docker/hue)
 
@@ -33,17 +31,15 @@ kubectl delete pods `kubectl get pods | grep hue | grep -v postgres | cut -d" " 
 * OS: Ubuntu 16.04 or 18.04.
 * Nodes: 1 primary instance of m3.medium (1CPU 3GB).
 
-Quick start with https://microk8s.io/#quick-start
+https://microk8s.io/#quick-start
 
 ```
-sudo snap install microk8s --classic
+sudo snap install microk8s --classicmicro
 
 snap alias microk8s.kubectl kubectl
 
-microk8s.enable metrics-server dns
+k8s.enable metrics-server dns
 ```
-
-And
 
 ```
 sudo snap install helm --classic
@@ -74,4 +70,4 @@ HTTP LoadBalancer. This avoids creating global static ips.
 
 ## Images
 
-All the images are on Docker Hub or can be built via Docker at [tools/docker](/tools/docker).
+All the images can currently can be built via [Docker](/tools/docker).

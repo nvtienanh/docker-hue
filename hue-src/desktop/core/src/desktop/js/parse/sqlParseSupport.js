@@ -1578,7 +1578,6 @@ const initSqlParser = function(parser) {
       parser.suggestKeywords([
         'AVRO',
         'INPUTFORMAT',
-        'JSONFILE',
         'ORC',
         'PARQUET',
         'RCFILE',
@@ -2171,24 +2170,24 @@ const initSqlParser = function(parser) {
     return loc;
   };
 
-  parser.addNewDatabaseLocation = function(location, identifierChain) {
+  parser.addNewDatabaseLocation = function (location, identifierChain) {
     parser.yy.definitions.push({
       type: 'database',
       location: adjustLocationForCursor(location),
       identifierChain: identifierChain
-    });
+    })
   };
 
-  parser.addNewTableLocation = function(location, identifierChain, colSpec) {
-    const columns = [];
+  parser.addNewTableLocation = function (location, identifierChain, colSpec) {
+    var columns = [];
     if (colSpec) {
-      colSpec.forEach(col => {
+      colSpec.forEach(function (col) {
         columns.push({
-          identifierChain: [col.identifier], // TODO: Complex
+          identifierChain: [ col.identifier ], // TODO: Complex
           type: col.type,
           location: adjustLocationForCursor(col.location)
-        });
-      });
+        })
+      })
     }
     parser.yy.definitions.push({
       type: 'table',

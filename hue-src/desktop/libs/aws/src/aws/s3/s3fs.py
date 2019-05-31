@@ -76,10 +76,6 @@ class S3FileSystem(object):
   def __init__(self, s3_connection):
     self._s3_connection = s3_connection
     self._filebrowser_action = PERMISSION_ACTION_S3
-    self.user = None
-    self.is_sentry_managed = lambda path: False
-    self.superuser = None
-    self.supergroup = None
 
   def _get_bucket(self, name):
     return self._s3_connection.get_bucket(name)
@@ -500,7 +496,7 @@ class S3FileSystem(object):
     return True
 
   def setuser(self, user):
-    self.user = user  # Only used in Cluster middleware request.fs
+    pass  # user-concept doesn't have sense for this implementation
 
   def get_upload_chuck_size(self):
     from hadoop.conf import UPLOAD_CHUNK_SIZE # circular dependency

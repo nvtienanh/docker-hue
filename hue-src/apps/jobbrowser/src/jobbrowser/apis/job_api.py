@@ -192,7 +192,6 @@ class YarnApi(Api):
       if hasattr(job, 'metrics'):
         common['metrics'] = job.metrics
     elif app['applicationType'] == 'YarnV2':
-      common['applicationType'] = app.get('type')
       common['properties'] = {
         'startTime': job.startTime,
         'finishTime': job.finishTime,
@@ -230,10 +229,7 @@ class YarnApi(Api):
           logs = parseResponse.get('logs')
           logs_list = parseResponse.get('logsList')
           if logs and len(logs) == 4:
-            if app_type == 'YarnV2' and logs[0]: #logs[0] is diagnostics
-              logs = logs[0]
-            else:
-              logs = logs[1]
+            logs = logs[1]
         else:
           response = job_attempt_logs_json(MockDjangoRequest(self.user), job=appid, name=log_name, is_embeddable=is_embeddable)
           logs = json.loads(response.content).get('log')

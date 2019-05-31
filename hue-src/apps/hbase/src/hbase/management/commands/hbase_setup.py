@@ -42,8 +42,6 @@ class Command(BaseCommand):
   def handle(self, *args, **options):
     if args:
       user = args[0]
-    elif options and options['user']:
-      user = options['user']
     else:
       user = install_sample_user()
 

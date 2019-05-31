@@ -640,7 +640,6 @@ class DataCatalog {
    * @param {Object} [options.definition] - The initial definition if not already set on the entry
    * @param {boolean} [options.cachedOnly] - Default: false
    * @param {boolean} [options.temporaryOnly] - Default: false
-   * // @param {Session} [options.session]
    * @return {Promise}
    */
   getEntry(options) {

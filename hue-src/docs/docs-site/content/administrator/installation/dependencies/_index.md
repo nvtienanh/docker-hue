@@ -20,16 +20,14 @@ tarball, you'll need these library development packages and tools installed on y
 
     sudo apt-get install git ant gcc g++ libffi-dev libkrb5-dev libmysqlclient-dev libsasl2-dev libsasl2-modules-gssapi-mit libsqlite3-dev libssl-dev libxml2-dev libxslt-dev make maven libldap2-dev python-dev python-setuptools libgmp3-dev
 
-
 **Install Node.js**
 
-    curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
+On Ubuntu 16.04 or less:
+
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo bash -
     sudo apt-get install -y nodejs
 
-
 **Install Oracle JDK**
-
-On Ubuntu 16.04 or less only:
 
     sudo add-apt-repository ppa:webupd8team/java
     sudo apt-get update
@@ -37,7 +35,7 @@ On Ubuntu 16.04 or less only:
 
 ### CentOS/RHEL
 
-    sudo yum install ant asciidoc cyrus-sasl-devel cyrus-sasl-gssapi cyrus-sasl-plain gcc gcc-c++ krb5-devel libffi-devel libxml2-devel libxslt-devel make mysql mysql-devel openldap-devel python-devel sqlite-devel gmp-devel
+    sudo yum install ant asciidoc cyrus-sasl-devel cyrus-sasl-gssapi cyrus-sasl-plain gcc gcc-c++ krb5-devel libffi-devel libxml2-devel libxslt-devel make  mysql mysql-devel openldap-devel python-devel sqlite-devel gmp-devel
 
 * [Oracle JDK](https://www.digitalocean.com/community/tutorials/how-to-install-java-on-centos-and-fedora)
 * mvn (from [``apache-maven``](https://gist.github.com/sebsto/19b99f1fa1f32cae5d00) package or maven3 tarball)
@@ -102,17 +100,13 @@ for more details, refer to this link: [https://docs.oracle.com/cd/E37670_01/E590
 * [Oracle Instant Client](http://www.oracle.com/technetwork/database/database-technologies/instant-client/downloads/index.html)
 
 1. Install Dependencies via Homebrew
-
     brew install mysql maven gmp openssl libffi && brew cask install java8
 
 2. Install Xcode command line tools
-
     sudo xcode-select --install
 
 3. Fix openssl errors
-
 Required for MacOS 10.11+
-
     export LDFLAGS=-L/usr/local/opt/openssl/lib && export CPPFLAGS=-I/usr/local/opt/openssl/include
 
 

@@ -23,7 +23,10 @@ import os
 import socket
 import stat
 
-from collections import OrderedDict
+try:
+  from collections import OrderedDict
+except ImportError:
+  from ordereddict import OrderedDict # Python 2.6
 
 from django.db import connection
 from django.utils.translation import ugettext_lazy as _
@@ -38,7 +41,6 @@ from desktop.lib.conf import Config, ConfigSection, UnspecifiedConfigSection,\
                              coerce_password_from_script, coerce_string
 from desktop.lib.i18n import force_unicode
 from desktop.lib.paths import get_desktop_root, get_run_root
-
 
 LOG = logging.getLogger(__name__)
 
@@ -683,36 +685,6 @@ METRICS = ConfigSection(
       default=30000),
   )
 )
-
-
-CONNECTORS = ConfigSection(
-  key='connectors',
-  help=_("""Configuration options for connectors to external services"""),
-  members=dict(
-    IS_ENABLED=Config(
-      key='is_enabled',
-      help=_('Enable connector page'),
-      default=False,
-      type=coerce_bool),
-   LIST=Config(
-      key='list',
-      default=['impala'],
-      type=coerce_csv),
-  )
-)
-
-ANALYTICS = ConfigSection(
-  key='analytics',
-  help=_("""Configuration options for analytics user usage for admins"""),
-  members=dict(
-    IS_ENABLED=Config(
-      key='is_enabled',
-      help=_('Enable analytics page'),
-      default=False,
-      type=coerce_bool),
-  )
-)
-
 
 DATABASE = ConfigSection(
   key='database',
@@ -1426,13 +1398,6 @@ OIDC = ConfigSection(
       default=True
     ),
 
-    OIDC_USERNAME_ATTRIBUTE=Config(
-      key="oidc_username_attribute",
-      help=_("The attribute to be used as username when creating and looking up the user."),
-      type=str,
-      default="preferred_username"
-    ),
-
     SUPERUSER_GROUP=Config(
       key="superuser_group",
       help=_("The group of users will be created and updated as superuser."),
@@ -1665,39 +1630,21 @@ TASK_SERVER = ConfigSection(
       default='amqp://guest:guest@localhost//',
       help=_('How the task server and tasks communicate.')
     ),
-    CELERY_RESULT_BACKEND = Config(
-      key='celery_result_backend',
+    RESULT_BACKEND = Config(
+      key='result_backend',
       dynamic_default=task_server_default_result_directory,
-      help=_('Where to store task results. Defaults to local file system path. Celery comes with a several other backends.')
+      help=_('Local file system path used to store task results when using the file result backend.')
     ),
     RESULT_CELERYD_OPTS = Config(
       key='celeryd_opts',
       default='--time-limit=300',
       help=_('Default options provided to the task server at startup.')
     ),
-    BEAT_ENABLED = Config(
+    BEAT_ENABLED= Config(
       key='beat_enabled',
       default=False,
       type=coerce_bool,
       help=_('Switch on the integration with the Task Scheduler.')
-    ),
-    FETCH_RESULT_LIMIT = Config(
-      key='fetch_result_limit',
-      default=2000,
-      type=coerce_positive_integer,
-      help=_('Number of query results rows to fetch into the result storage.')
-    ),
-    RESULT_STORAGE = Config(
-      key='result_storage',
-      type=str,
-      help=_('Django file storage class to use to temporarily store query results'),
-      default='{"backend": "django.core.files.storage.FileSystemStorage", "properties": {"location": "./logs"}}'
-    ),
-    EXECUTION_STORAGE = Config(
-      key='execution_storage',
-      type=str,
-      help=_('Django cache to use to store temporarily used data during query execution. This is in addition to result_file_storage and result_backend.'),
-      default='{"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "celery-hue"}'
     ),
 ))
 
@@ -1962,7 +1909,7 @@ def config_validator(user):
   # Validate if oozie email server is active
   try:
     from oozie.views.editor2 import _is_oozie_mail_enabled
-
+  
     if not _is_oozie_mail_enabled(user):
       res.append(('OOZIE_EMAIL_SERVER', unicode(_('Email notifications is disabled for Workflows and Jobs as SMTP server is localhost.'))))
   except Exception, e:

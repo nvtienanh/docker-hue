@@ -1,5 +1,5 @@
 name: hue
-description: Hue SQL Cloud Editor
+description: Hue SQL Data Warehouse Editor
 version: 1.0.0
 appVersion: "1.0"
 apiVersion: v1

@@ -122,19 +122,13 @@ ${ fb_components.menubar() }
 
       $('#saveAsForm').ajaxForm({
         dataType: 'json',
-        beforeSubmit: function(data) {
+        beforeSubmit: function() {
           if ($.trim($("#saveAsForm").find("input[name='path']").val()) == "") {
             $("#saveAsForm").find("input[name='path']").addClass("fieldError");
             $("#saveAsNameRequiredAlert").show();
             resetPrimaryButtonsStatus(); //globally available
             return false;
           }
-          // Contents of SaveAs form is not updated. Need to do it manually
-          data.forEach(dataUnit => {
-            if (dataUnit.name.toLowerCase() === 'contents') {
-                dataUnit.value = $('#saveForm textarea').val();
-            }
-          });
           return true;
         },
         success: function (data) {

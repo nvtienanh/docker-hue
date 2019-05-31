@@ -169,8 +169,8 @@
 % endif
 
 <div id="jHueNotify" class="alert hide">
-  <button class="close">&times;</button>
-  <div class="message"></div>
+    <button class="close">&times;</button>
+    <div class="message"></div>
 </div>
 
 
@@ -186,21 +186,21 @@ ${ hueIcons.symbols() }
       ${ banner_message or conf.CUSTOM.BANNER_TOP_HTML.get() | n,unicode }
     </div>
   % endif
-
   % if not IS_EMBEDDED.get():
   <nav class="navbar navbar-default">
     <div class="navbar-inner top-nav">
       <div class="top-nav-left">
         % if not IS_EMBEDDED.get():
-          % if not (IS_MULTICLUSTER_ONLY.get() and has_multi_cluster()):
-          <a class="hamburger hamburger-hue pull-left" data-bind="toggle: leftNavVisible, css: { 'is-active': leftNavVisible }">
-            <span class="hamburger-box"><span class="hamburger-inner"></span></span>
-          </a>
+        % if not (IS_MULTICLUSTER_ONLY.get() and has_multi_cluster()):
+        <a class="hamburger hamburger-hue pull-left" data-bind="toggle: leftNavVisible, css: { 'is-active': leftNavVisible }">
+          <span class="hamburger-box"><span class="hamburger-inner"></span></span>
+        </a>
 
-          <a class="brand" data-bind="hueLink: '/home/'" href="javascript: void(0);" title="${_('Documents')}">
-              <svg style="height: 24px; width: 120px;"><use xlink:href="#hi-logo"></use></svg>
-          </a>
-          % endif
+        <a class="brand" data-bind="hueLink: '/home/'" href="javascript: void(0);" title="${_('Documents')}">
+            <svg style="height: 24px; width: 120px;"><use xlink:href="#hi-logo"></use></svg>
+        </a>
+        % endif
+
         % endif
 
         % if not IS_MULTICLUSTER_ONLY.get():
@@ -253,6 +253,7 @@ ${ hueIcons.symbols() }
       </div>
 
       <div class="top-nav-right">
+
         % if user.is_authenticated() and section != 'login' and (cluster != ANALYTIC_DB or IS_MULTICLUSTER_ONLY.get()):
         <div class="dropdown navbar-dropdown pull-right">
           % if IS_MULTICLUSTER_ONLY.get():
@@ -272,11 +273,11 @@ ${ hueIcons.symbols() }
             % if is_admin(user):
             <li data-bind="hueLink: '/useradmin/users/'"><a href="javascript: void(0);"><i class="fa fa-fw fa-group"></i> ${_('Manage Users')}</a></li>
             % endif
-            % if is_admin(user):
-            <li><a href="/about/"><span class="dropdown-no-icon">${_('Administration')}</span></a></li>
-            % endif
-            <li><a href="javascript:void(0)" onclick="huePubSub.publish('show.welcome.tour')"><span class="dropdown-no-icon">${_('Welcome Tour')}</span></a></li>
             <li><a href="http://gethue.com" target="_blank"><span class="dropdown-no-icon">${_('Help')}</span></a></li>
+            <li><a href="javascript:void(0)" onclick="huePubSub.publish('show.welcome.tour')"><span class="dropdown-no-icon">${_('Welcome Tour')}</span></a></li>
+            % if is_admin(user):
+            <li><a href="/about/"><span class="dropdown-no-icon">${_('Hue Administration')}</span></a></li>
+            % endif
             <li class="divider"></li>
             <li><a title="${_('Sign out')}" href="/accounts/logout/"><i class="fa fa-fw fa-sign-out"></i> ${ _('Sign out') }</a></li>
           </ul>
@@ -301,6 +302,7 @@ ${ hueIcons.symbols() }
     </div>
     <div id="mini_jobbrowser"></div>
   </div>
+
   % endif
 
   <div class="content-wrapper">
@@ -415,8 +417,6 @@ ${ hueIcons.symbols() }
       <div id="embeddable_dump_config" class="embeddable"></div>
       <div id="embeddable_threads" class="embeddable"></div>
       <div id="embeddable_metrics" class="embeddable"></div>
-      <div id="embeddable_connectors" class="embeddable"></div>
-      <div id="embeddable_analytics" class="embeddable"></div>
       <div id="embeddable_403" class="embeddable"></div>
       <div id="embeddable_404" class="embeddable"></div>
       <div id="embeddable_500" class="embeddable"></div>
@@ -562,8 +562,6 @@ ${ smart_unicode(login_modal(request).content) | n,unicode }
     dump_config: { url: '/desktop/dump_config', title: '${_('Dump Configuration')}' },
     threads: { url: '/desktop/debug/threads', title: '${_('Threads')}' },
     metrics: { url: '/desktop/metrics', title: '${_('Metrics')}' },
-    connectors: { url: '/desktop/connectors', title: '${_('Connectors')}' },
-    analytics: { url: '/desktop/analytics', title: '${_('Analytics')}' },
     sqoop: { url: '/sqoop', title: '${_('Sqoop')}' },
     jobsub: { url: '/jobsub/not_available', title: '${_('Job Designer')}' },
     % if other_apps:

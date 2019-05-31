@@ -17,8 +17,8 @@
 
 import base64
 import datetime
-import json
 import logging
+import json
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -27,12 +27,15 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy as _t
 
 from enum import Enum
-from TCLIService.ttypes import TSessionHandle, THandleIdentifier, TOperationState, TOperationHandle, TOperationType
+
+from librdbms.server import dbms as librdbms_dbms
 
 from desktop.redaction import global_redaction_engine
 from desktop.lib.exceptions_renderable import PopupException
 from desktop.models import Document
-from librdbms.server import dbms as librdbms_dbms
+
+from TCLIService.ttypes import TSessionHandle, THandleIdentifier,\
+  TOperationState, TOperationHandle, TOperationType
 
 from beeswax.design import HQLdesign
 

@@ -82,7 +82,6 @@ describe('sqlAutocompleteParser.js CREATE statements', () => {
             'TEMPORARY FUNCTION',
             'TEMPORARY MACRO',
             'TEMPORARY TABLE',
-            'TRANSACTIONAL TABLE',
             'VIEW'
           ]
         }
@@ -2252,20 +2251,6 @@ describe('sqlAutocompleteParser.js CREATE statements', () => {
         }
       );
 
-      it('should handle "CREATE TRANSACTIONAL TABLE transactional_table_test(key string, value string) PARTITIONED BY(ds string) STORED AS ORC;|"', () => {
-        assertAutoComplete({
-          beforeCursor:
-            'CREATE TRANSACTIONAL TABLE transactional_table_test(key string, value string) PARTITIONED BY(ds string) STORED AS ORC;',
-          noErrors: true,
-          afterCursor: '',
-          dialect: 'hive',
-          containsKeywords: ['SELECT'],
-          expectedResult: {
-            lowerCase: false
-          }
-        });
-      });
-
       it(
         'should handle "CREATE TEMPORARY EXTERNAL TABLE IF NOT EXISTS db.tbl (id INT, col VARCHAR, ' +
           'bla DOUBLE PRECISION, CONSTRAINT cnstrnt FOREIGN KEY (id, bla) ' +
@@ -2730,7 +2715,6 @@ describe('sqlAutocompleteParser.js CREATE statements', () => {
             suggestKeywords: [
               'AVRO',
               'INPUTFORMAT',
-              'JSONFILE',
               'ORC',
               'PARQUET',
               'RCFILE',

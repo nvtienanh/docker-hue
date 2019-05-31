@@ -433,15 +433,13 @@ class LdapBackend(object):
         # %(user)s is a special string that will get replaced during the authentication process
         setattr(self._backend.settings, 'USER_DN_TEMPLATE', "%(user)s@" + nt_domain)
 
-    # If Secure ldaps is specified in hue.ini then ldap code automatically use SSL/TLS communication
-    if not ldap_url.lower().startswith('ldaps'):
-      setattr(self._backend.settings, 'START_TLS', ldap_config.USE_START_TLS.get())
-
     # Certificate-related config settings
     if ldap_config.LDAP_CERT.get():
+      setattr(self._backend.settings, 'START_TLS', ldap_config.USE_START_TLS.get())
       ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
       ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, ldap_config.LDAP_CERT.get())
     else:
+      setattr(self._backend.settings, 'START_TLS', False)
       ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 
     if ldap_config.FOLLOW_REFERRALS.get():
@@ -686,7 +684,7 @@ class OIDCBackend(OIDCAuthenticationBackend):
     return None
 
   def filter_users_by_claims(self, claims):
-    username = claims.get(import_from_settings('OIDC_USERNAME_ATTRIBUTE', 'preferred_username'))
+    username = claims.get('preferred_username')
     if not username:
       return self.UserModel.objects.none()
     return self.UserModel.objects.filter(username__iexact=username)
@@ -701,7 +699,7 @@ class OIDCBackend(OIDCAuthenticationBackend):
     """Return object for a newly created user account."""
     # Overriding lib's logic, use preferred_username from oidc as username
 
-    username = claims.get(import_from_settings('OIDC_USERNAME_ATTRIBUTE', 'preferred_username'), '')
+    username = claims.get('preferred_username', '')
     email = claims.get('email', '')
     first_name = claims.get('given_name', '')
     last_name = claims.get('family_name', '')

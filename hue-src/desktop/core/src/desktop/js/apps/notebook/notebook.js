@@ -373,9 +373,6 @@ class Notebook {
             komapping.fromJS(data.session, {}, session);
             if (self.getSession(session.type()) == null) {
               self.addSession(session);
-            } else {
-              const _session = self.getSession(session.type());
-              komapping.fromJS(data.session, {}, _session);
             }
             $.each(self.getSnippets(session.type()), (index, snippet) => {
               snippet.status('ready');
@@ -384,7 +381,7 @@ class Notebook {
               setTimeout(callback, 500);
             }
           } else if (data.status == 401) {
-            $(document).trigger('showAuthModal', { type: session.type(), message: data.message });
+            $(document).trigger('showAuthModal', { type: session.type() });
           } else {
             fail(data.message);
           }
@@ -637,7 +634,7 @@ class Notebook {
           if (data && data.history) {
             data.history.forEach(nbk => {
               parsedHistory.push(
-                self.makeHistoryRecord(
+                self._makeHistoryRecord(
                   nbk.absoluteUrl,
                   nbk.data.statement,
                   nbk.data.lastExecuted,
@@ -719,7 +716,7 @@ class Notebook {
       }
     };
 
-    self.makeHistoryRecord = function(url, statement, lastExecuted, status, name, uuid) {
+    self._makeHistoryRecord = function(url, statement, lastExecuted, status, name, uuid) {
       return komapping.fromJS({
         url: url,
         query: statement.substring(0, 1000) + (statement.length > 1000 ? '...' : ''),
@@ -887,7 +884,7 @@ class Notebook {
           snippet.status = 'ready'; // Protect from storm of check_statuses
           const _snippet = new Snippet(vm, self, snippet);
           _snippet.init();
-          _snippet.previousChartOptions = vm.getPreviousChartOptions(_snippet);
+          _snippet.previousChartOptions = vm._getPreviousChartOptions(_snippet);
           self.presentationSnippets()[key] = _snippet;
         });
       }

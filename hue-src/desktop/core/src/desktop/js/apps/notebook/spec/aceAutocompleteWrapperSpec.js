@@ -28,6 +28,13 @@ describe('aceAutocompleteWrapper.js', () => {
         type: ko.observable('hive'),
         database: function() {
           return 'default';
+        },
+        getApiHelper: function() {
+          return {
+            loadDatabases: function(options) {
+              options.successCallback(['bla', undefined]);
+            }
+          };
         }
       }
     });

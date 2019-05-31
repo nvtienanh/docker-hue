@@ -169,15 +169,12 @@ def entry():
         locate_java = subprocess.Popen(
           ['bash', '-c', '. /opt/cloudera/cm-agent/service/common/cloudera-config.sh; locate_java_home'],
           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      else:
-        locate_java = None
 
       JAVA_HOME = "UNKNOWN"
 
-      if locate_java is not None:
-        for line in iter(locate_java.stdout.readline, ''):
-          if 'JAVA_HOME' in line:
-            JAVA_HOME = line.rstrip().split('=')[1]
+      for line in iter(locate_java.stdout.readline, ''):
+        if 'JAVA_HOME' in line:
+          JAVA_HOME = line.rstrip().split('=')[1]
 
       if JAVA_HOME != "UNKNOWN":
         os.environ["JAVA_HOME"] = JAVA_HOME

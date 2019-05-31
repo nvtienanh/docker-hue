@@ -62,10 +62,8 @@
 <hive>'REFERENCES'                         { return '<hive>REFERENCES'; }
 <hive>'REVOKE'                             { return '<hive>REVOKE'; }
 <hive>'ROLLUP'                             { return '<hive>ROLLUP'; }
-<hive>'SYNC'                               { return '<hive>SYNC'; }
 <hive>'TABLE'                              { return '<hive>TABLE'; }
 <hive>'TIMESTAMP'                          { return '<hive>TIMESTAMP'; }
-<hive>'UTC_TIMESTAMP'                      { return '<hive>UTC_TIMESTAMP'; }
 <hive>'USER'                               { return '<hive>USER'; }
 <hive>'USING'                              { return '<hive>USING'; }
 <hive>'VIEWS'                              { return '<hive>VIEWS'; }
@@ -127,7 +125,6 @@
 <hive>'INPUTFORMAT'                        { return '<hive>INPUTFORMAT'; }
 <hive>'ITEMS'                              { return '<hive>ITEMS'; }
 <hive>'JAR'                                { return '<hive>JAR'; }
-<hive>'JSONFILE'                           { return '<hive>JSONFILE'; }
 <hive>'KEY'                                { return '<hive>KEY'; }
 <hive>'KEYS'                               { return '<hive>KEYS'; }
 <hive>'LINES'                              { return '<hive>LINES'; }
@@ -196,7 +193,6 @@
 <hive>'TEXTFILE'                           { return '<hive>TEXTFILE'; }
 <hive>'TINYINT'                            { return '<hive>TINYINT'; }
 <hive>'TOUCH'                              { return '<hive>TOUCH'; }
-<hive>'TRANSACTIONAL'                      { return '<hive>TRANSACTIONAL'; }
 <hive>'TRANSACTIONS'                       { return '<hive>TRANSACTIONS'; }
 <hive>'UNARCHIVE'                          { return '<hive>UNARCHIVE'; }
 <hive>'UNIONTYPE'                          { return '<hive>UNIONTYPE'; }

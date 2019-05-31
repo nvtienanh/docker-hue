@@ -1251,14 +1251,6 @@ class DataCatalogEntry {
   isTable() {
     const self = this;
     if (self.path.length === 2) {
-      if (
-        self.analysis &&
-        self.analysis.details &&
-        self.analysis.details.properties &&
-        self.analysis.details.properties.table_type === 'VIRTUAL_VIEW'
-      ) {
-        return false;
-      }
       if (self.sourceMeta) {
         return !self.sourceMeta.is_view;
       }
@@ -1280,13 +1272,7 @@ class DataCatalogEntry {
     return (
       self.path.length === 2 &&
       ((self.sourceMeta && self.sourceMeta.is_view) ||
-        (self.definition &&
-          self.definition.type &&
-          self.definition.type.toLowerCase() === 'view') ||
-        (self.analysis &&
-          self.analysis.details &&
-          self.analysis.details.properties &&
-          self.analysis.details.properties.table_type === 'VIRTUAL_VIEW'))
+        (self.definition && self.definition.type && self.definition.type.toLowerCase() === 'view'))
     );
   }
 

@@ -4,34 +4,15 @@ metadata:
   name: hue-config
 data:
   hue-ini: |
-    [desktop]
-    [[database]]
-    engine=postgresql_psycopg2
-    host=hue-postgres
-    port=5432
-    user=hue
-    password=hue
-    name=hue
-
     [impala]
     server_host={{ .Values.impala.server_host }}
-
-    [notebook]
-    [[interpreters]]
-    [[[impala]]]
-      name=Impala
-      interface=hiveserver2
-    [[[postgresql]]]
-      name = postgresql
-      interface=sqlalchemy
-      options='{"url": "postgresql://hue:hue@hue-database:5432/hue"}'
 
     [aws]
     [[aws_accounts]]
     [[[default]]]
-    access_key_id={{ .Values.aws.awsAccessKeyId }}
-    secret_access_key={{ .Values.aws.awsSecretAccessKey }}
-    region={{ .Values.aws.awsRegion }}
+    access_key_id={{ .Values.hue.awsAccessKeyId }}
+    secret_access_key={{ .Values.hue.awsSecretAccessKey }}
+    region={{ .Values.hue.awsRegion }}
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -46,7 +27,7 @@ spec:
     spec:
       containers:
         - name: hue
-          image: {{ .Values.registry }}:{{ .Values.tag }}
+          image: {{ .Values.registry }}/hue:{{ .Values.tag }}
           imagePullPolicy: Always
           ports:
             - containerPort: 8888
@@ -79,7 +60,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: {{ .Values.domain }}
+  - host: altus.{{ .Values.domain }}
     http:
       paths:
       - path: /

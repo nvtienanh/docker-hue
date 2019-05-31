@@ -22,33 +22,23 @@ import logging
 
 import aws
 import azure.client
-
-from aws.conf import is_enabled as is_s3_enabled
 from azure.conf import is_adls_enabled
-from hadoop.cluster import get_hdfs
-from hadoop.conf import has_hdfs_enabled
+from aws.conf import is_enabled as is_s3_enabled
 
 from desktop.lib.fs import ProxyFS
-
+from hadoop import cluster
 
 FS_CACHE = {}
 
-DEFAULT_SCHEMA = None
+DEFAULT_SCHEMA = 'hdfs'
 
 FS_GETTERS = {
+  'hdfs': cluster.get_hdfs,
 }
-
-if has_hdfs_enabled():
-  FS_GETTERS['hdfs'] = get_hdfs
-  DEFAULT_SCHEMA = 'hdfs'
 if is_s3_enabled():
   FS_GETTERS['s3a'] = aws.get_s3fs
-  if DEFAULT_SCHEMA is None:
-    DEFAULT_SCHEMA = 's3a'
 if is_adls_enabled():
   FS_GETTERS['adl'] = azure.client.get_client
-  if DEFAULT_SCHEMA is None:
-      DEFAULT_SCHEMA = 'adl'
 
 
 def get_filesystem(name='default'):
@@ -63,7 +53,6 @@ def get_filesystem(name='default'):
 
 def _make_fs(name):
   fs_dict = {}
-
   for schema, getter in FS_GETTERS.iteritems():
     try:
       if getter is not None:
@@ -80,11 +69,7 @@ def _make_fs(name):
         logging.warn('Can not get filesystem called "%s" for "%s" schema' % (name, schema))
     except Exception, e:
       logging.error('Failed to get filesystem called "%s" for "%s" schema: %s' % (name, schema, e))
-
-  if fs_dict:
-    return ProxyFS(fs_dict, DEFAULT_SCHEMA)
-  else:
-    return None
+  return ProxyFS(fs_dict, DEFAULT_SCHEMA)
 
 
 def clear_cache():

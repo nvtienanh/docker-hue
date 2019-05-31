@@ -20,12 +20,10 @@ from librdbms.jdbc import query_and_fetch
 from notebook.connectors.jdbc import JdbcApi
 from notebook.connectors.jdbc import Assist
 
-
 class JdbcApiTeradata(JdbcApi):
 
   def _createAssist(self, db):
     return TeradataAssist(db)
-
 
 class TeradataAssist(Assist):
 

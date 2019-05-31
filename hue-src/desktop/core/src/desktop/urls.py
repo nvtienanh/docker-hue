@@ -36,7 +36,7 @@ from django.contrib import admin
 from django.views.static import serve
 
 from desktop import appmanager
-from desktop.conf import METRICS, USE_NEW_EDITOR, ENABLE_DJANGO_DEBUG_TOOL, CONNECTORS, ANALYTICS
+from desktop.conf import METRICS, USE_NEW_EDITOR, ENABLE_DJANGO_DEBUG_TOOL
 
 from desktop.auth import views as desktop_auth_views
 from desktop.settings import is_oidc_configured
@@ -154,9 +154,9 @@ dynamic_patterns += [
   url(r'^desktop/api2/doc/share/?$', desktop_api2.share_document),
 
   url(r'^desktop/api2/get_config/?$', desktop_api2.get_config),
-  url(r'^desktop/api2/context/namespaces/(?P<interface>[\w\-]+)/?$', desktop_api2.get_context_namespaces),
-  url(r'^desktop/api2/context/computes/(?P<interface>[\w\-]+)/?$', desktop_api2.get_context_computes),
-  url(r'^desktop/api2/context/clusters/(?P<interface>[\w\-]+)/?$', desktop_api2.get_context_clusters),
+  url(r'^desktop/api2/context/namespaces/(?P<interface>\w+)/?$', desktop_api2.get_context_namespaces),
+  url(r'^desktop/api2/context/computes/(?P<interface>\w+)/?$', desktop_api2.get_context_computes),
+  url(r'^desktop/api2/context/clusters/(?P<interface>\w+)/?$', desktop_api2.get_context_clusters),
   url(r'^desktop/api2/user_preferences/(?P<key>\w+)?$', desktop_api2.user_preferences, name="desktop.api2.user_preferences"),
 
   url(r'^desktop/api2/doc/export/?$', desktop_api2.export_documents),
@@ -191,16 +191,6 @@ dynamic_patterns += [
 if METRICS.ENABLE_WEB_METRICS.get():
   dynamic_patterns += [
     url(r'^desktop/metrics/', include('desktop.lib.metrics.urls'))
-  ]
-
-if CONNECTORS.IS_ENABLED.get():
-  dynamic_patterns += [
-    url(r'^desktop/connectors/', include('desktop.lib.connectors.urls'))
-  ]
-
-if ANALYTICS.IS_ENABLED.get():
-  dynamic_patterns += [
-    url(r'^desktop/analytics/', include('desktop.lib.analytics.urls'))
   ]
 
 dynamic_patterns += [

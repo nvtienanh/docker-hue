@@ -39,17 +39,15 @@ CreateStatement_EDIT
  | FunctionDefinition_EDIT
  | IndexDefinition_EDIT
  | MacroDefinition_EDIT
- | AnyCreate OptionalHiveTemporary OptionalHiveTransactional OptionalExternal 'CURSOR'
+ | AnyCreate OptionalHiveTemporary OptionalExternal 'CURSOR'
    {
-     if ($4) {
+     if ($3) {
        parser.suggestKeywords(['TABLE']);
      } else if (parser.isHive()) {
-       if ($2 && !$3) {
+       if ($2) {
          parser.suggestKeywords(['EXTERNAL TABLE', 'FUNCTION', 'MACRO', 'TABLE']);
-       } else if (!$2 && !$3) {
-         parser.suggestKeywords(['DATABASE', 'EXTERNAL TABLE', 'FUNCTION', 'INDEX', 'ROLE', 'SCHEMA', 'TABLE', 'TEMPORARY EXTERNAL TABLE', 'TEMPORARY FUNCTION', 'TEMPORARY MACRO', 'TEMPORARY TABLE', 'TRANSACTIONAL TABLE', 'VIEW']);
-       } else if ($3) {
-         parser.suggestKeywords(['TABLE']);
+       } else {
+         parser.suggestKeywords(['DATABASE', 'EXTERNAL TABLE', 'FUNCTION', 'INDEX', 'ROLE', 'SCHEMA', 'TABLE', 'TEMPORARY EXTERNAL TABLE', 'TEMPORARY FUNCTION', 'TEMPORARY MACRO', 'TEMPORARY TABLE', 'VIEW']);
        }
      } else if (parser.isImpala()) {
        parser.suggestKeywords(['AGGREGATE FUNCTION', 'DATABASE', 'EXTERNAL TABLE', 'FUNCTION', 'ROLE', 'SCHEMA', 'TABLE', 'VIEW']);
@@ -183,18 +181,18 @@ PropertyAssignment
  ;
 
 TableDefinition
- : AnyCreate OptionalHiveTemporary OptionalHiveTransactional OptionalExternal AnyTable OptionalIfNotExists TableDefinitionRightPart
+ : AnyCreate OptionalHiveTemporary OptionalExternal AnyTable OptionalIfNotExists TableDefinitionRightPart
  ;
 
 TableDefinition_EDIT
- : AnyCreate OptionalHiveTemporary OptionalHiveTransactional OptionalExternal AnyTable OptionalIfNotExists TableDefinitionRightPart_EDIT
- | AnyCreate OptionalHiveTemporary OptionalHiveTransactional OptionalExternal AnyTable OptionalIfNotExists 'CURSOR'
+ : AnyCreate OptionalHiveTemporary OptionalExternal AnyTable OptionalIfNotExists TableDefinitionRightPart_EDIT
+ | AnyCreate OptionalHiveTemporary OptionalExternal AnyTable OptionalIfNotExists 'CURSOR'
    {
-     if (!$6) {
+     if (!$5) {
        parser.suggestKeywords(['IF NOT EXISTS']);
      }
    }
- | AnyCreate OptionalHiveTemporary OptionalHiveTransactional OptionalExternal AnyTable OptionalIfNotExists_EDIT
+ | AnyCreate OptionalHiveTemporary OptionalExternal AnyTable OptionalIfNotExists_EDIT
  ;
 
 TableDefinitionRightPart
@@ -1161,7 +1159,6 @@ StoredAs_EDIT
 FileFormat
  : '<hive>AVRO'
  | '<hive>INPUTFORMAT' QuotedValue '<hive>OUTPUTFORMAT' QuotedValue
- | '<hive>JSONFILE'
  | '<hive>ORC'
  | '<hive>PARQUET'
  | '<hive>RCFILE'
