@@ -1,5 +1,7 @@
-registry: "docker-registry.infra.cloudera.com/cloudera/datawarehouse"
-tag: "v2"
+registry: "gethue/hue"
+tag: "latest"
+impala:
+  server_host: "localhost"
 aws:
   accessKeyId: ""
   secretAccessKey: ""

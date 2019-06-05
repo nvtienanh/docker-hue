@@ -233,10 +233,10 @@ ${ components.menubar(is_embeddable) }
   <h4>${ _('Properties') } <i data-bind="visible: $parent.loadingDetails()" class="fa fa-spinner fa-spin" style="display: none;"></i></h4>
   <div class="row-fluid">
     <div class="metastore-property">
-      <!-- ko if: is_view -->
+      <!-- ko if: $parent.catalogEntry.isView() -->
         ${ _('View') }
       <!-- /ko -->
-      <!-- ko ifnot: is_view -->
+      <!-- ko ifnot: $parent.catalogEntry.isView() -->
         <span data-bind="visible: partition_keys.length" style="display: none;">
           <a class="pointer" data-bind="click: function() { $root.currentTab('partitions'); $('.page-content').scrollTop(0); }">
             ${ _("Partitioned") }
@@ -245,7 +245,7 @@ ${ components.menubar(is_embeddable) }
         ${ _('Table') }
       <!-- /ko -->
     </div>
-    <!-- ko ifnot: is_view -->
+    <!-- ko ifnot: $parent.catalogEntry.isView() -->
     <div class="metastore-property">
       <!-- ko if: details.properties.table_type == 'MANAGED_TABLE' -->
         ${_('Managed')}
@@ -279,7 +279,7 @@ ${ components.menubar(is_embeddable) }
 </script>
 
 <script type="text/html" id="metastore-table-stats">
-  <!-- ko if: tableDetails() && ! tableDetails().is_view -->
+  <!-- ko if: catalogEntry.isTable() -->
     <!-- ko with: tableDetails -->
     <h4>${ _('Stats') }
       <!-- ko ifnot: partition_keys.length -->
@@ -287,11 +287,11 @@ ${ components.menubar(is_embeddable) }
         <!-- ko if: $parent.refreshingTableStats -->
         <i class="fa fa-refresh fa-spin"></i>
         <!-- /ko -->
-        <!-- ko ifnot: $parent.refreshingTableStats() || is_view  -->
+        <!-- ko ifnot: $parent.refreshingTableStats() -->
         <a class="pointer" href="javascript: void(0);" data-bind="click: $parent.refreshTableStats"><i class="fa fa-refresh"></i></a>
         <!-- /ko -->
         % endif
-        <span data-bind="visible: details.stats.COLUMN_STATS_ACCURATE == 'false' && ! is_view" rel="tooltip" data-placement="top" title="${ _('The column stats for this table are not accurate') }"><i class="fa fa-exclamation-triangle"></i></span>
+        <span data-bind="visible: details.stats.COLUMN_STATS_ACCURATE == 'false'" rel="tooltip" data-placement="top" title="${ _('The column stats for this table are not accurate') }"><i class="fa fa-exclamation-triangle"></i></span>
       <!-- /ko -->
     </h4>
     <div class="row-fluid">
@@ -508,7 +508,7 @@ ${ components.menubar(is_embeddable) }
   <div class="row-fluid">
     <div class="span12 tile entries-table-container">
       <h4 class="entries-table-header">${ _('Tables') }</h4>
-      <div class="actionbar-actions" data-bind="visible: tables().length > 0">
+      <div class="actionbar-actions">
         <button class="btn toolbarBtn margin-left-20" title="${_('Browse the selected table')}" data-bind="click: function () { onTableClick(selectedTables()[0].catalogEntry()); selectedTables([]); }, disable: selectedTables().length !== 1"><i class="fa fa-eye"></i> ${_('View')}</button>
         <button class="btn toolbarBtn" title="${_('Query the selected table')}" data-bind="click: function () { queryAndWatch(selectedTables()[0].catalogEntry()) }, disable: selectedTables().length !== 1">
           <i class="fa fa-play fa-fw"></i> ${_('Query')}
@@ -683,8 +683,8 @@ ${ components.menubar(is_embeddable) }
   <!-- /ko -->
   <!-- ko if: loaded() && !hasErrors() -->
   <!-- ko template: { if: rows().length, name: 'metastore-samples-table' } --><!-- /ko -->
-  <div data-bind="visible: !rows().length && metastoreTable.tableDetails().is_view" style="display: none;" class="empty-message">${ _('The view does not contain any data.') }</div>
-  <div data-bind="visible: !rows().length && !metastoreTable.tableDetails().is_view" style="display: none;" class="empty-message">${ _('The table does not contain any data.') }</div>
+  <div data-bind="visible: !rows().length && metastoreTable.catalogEntry.isView()" style="display: none;" class="empty-message">${ _('The view does not contain any data.') }</div>
+  <div data-bind="visible: !rows().length && !metastoreTable.catalogEntry.isView()" style="display: none;" class="empty-message">${ _('The table does not contain any data.') }</div>
   <!-- /ko -->
   <!-- ko if: hasErrors() -->
   <div class="empty-message alert" data-bind="text: errorMessage() || '${ _ko('Could not load the sample, see the server log for details.') }'"></div>
@@ -908,83 +908,83 @@ ${ components.menubar(is_embeddable) }
         <div class="metastore-main">
           <!-- ko hueSpinner: { spin: loading, center: true, size: 'xlarge' } --><!-- /ko -->
           <!-- ko ifnot: loading -->
-          <h1>
-            <div class="inline-block pull-right">
-              <!-- ko with: source -->
+            <h1>
+              <div class="inline-block pull-right">
+                <!-- ko with: source -->
+                  <!-- ko with: namespace -->
+                    <!-- ko with: database -->
+                      <!-- ko with: table -->
+                      % if USE_NEW_EDITOR.get():
+                        <a href="javascript: void(0);" class="btn btn-default" data-bind="click: function() { queryAndWatch(catalogEntry); }" title="${_('Query')}"><i class="fa fa-play fa-fw"></i> ${_('Query')}</a>
+                      % else:
+                        <a class="btn btn-default" data-bind="attr: { 'href': '/metastore/table/'+ catalogEntry.path.join('/') + '/read' }" title="${_('Browse Data')}"><i class="fa fa-play fa-fw"></i> ${_('Browse Data')}</a>
+                      % endif
+                      % if has_write_access:
+                        <a href="javascript: void(0);" class="btn btn-default" data-bind="click: showImportData, visible: tableDetails() && !catalogEntry.isView()" title="${_('Import Data')}"><i class="fa fa-upload fa-fw"></i> ${_('Import')}</a>
+                      % endif
+                      % if has_write_access:
+                        <a href="#dropSingleTable" data-toggle="modal" class="btn btn-default" data-bind="attr: { 'title' : tableDetails() && catalogEntry.isView() ? '${_('Drop View')}' : '${_('Drop Table')}' }"><i class="fa fa-times fa-fw"></i> ${_('Drop')}</a>
+                      % endif
+                      <a href="javascript: void(0);" class="btn btn-default" data-bind="click: reload" title="${_('Refresh the table')}"><i class="fa fa-refresh" data-bind="css: { 'fa-spin blue' : refreshing }"></i> ${_('Refresh')}</a>
+                      <!-- /ko -->
+                      <!-- ko if: !table() -->
+                      <a href="javascript: void(0);" class="btn btn-default" data-bind="click: reload" title="${_('Refresh the database')}"><i class="fa fa-refresh" data-bind="css: { 'fa-spin blue' : refreshing }"></i> ${_('Refresh')}</a>
+                      <!-- /ko -->
+                    <!-- /ko -->
+                    <!-- ko if: !database() -->
+                      <a href="javascript: void(0);" class="btn btn-default" data-bind="click: reload" title="${_('Refresh')}"><i class="fa fa-refresh" data-bind="css: { 'fa-spin blue' : loading }"></i> ${_('Refresh')}</a>
+                    <!-- /ko -->
+                  <!-- /ko -->
+                <!-- /ko -->
+              </div>
+
+              <!-- ko template: 'metastore-breadcrumbs' --><!-- /ko -->
+            </h1>
+
+            <!-- ko with: source -->
               <!-- ko with: namespace -->
-              <!-- ko with: database -->
-              <!-- ko with: table -->
-              % if USE_NEW_EDITOR.get():
-                <a href="javascript: void(0);" class="btn btn-default" data-bind="click: function() { queryAndWatch(catalogEntry); }" title="${_('Query')}"><i class="fa fa-play fa-fw"></i> ${_('Query')}</a>
-              % else:
-                <a class="btn btn-default" data-bind="attr: { 'href': '/metastore/table/'+ catalogEntry.path.join('/') + '/read' }" title="${_('Browse Data')}"><i class="fa fa-play fa-fw"></i> ${_('Browse Data')}</a>
-              % endif
-              % if has_write_access:
-                <a href="javascript: void(0);" class="btn btn-default" data-bind="click: showImportData, visible: tableDetails() && !tableDetails().is_view" title="${_('Import Data')}"><i class="fa fa-upload fa-fw"></i> ${_('Import')}</a>
-              % endif
-              % if has_write_access:
-                <a href="#dropSingleTable" data-toggle="modal" class="btn btn-default" data-bind="attr: { 'title' : tableDetails() && tableDetails().is_view ? '${_('Drop View')}' : '${_('Drop Table')}' }"><i class="fa fa-times fa-fw"></i> ${_('Drop')}</a>
-              % endif
-              <a href="javascript: void(0);" class="btn btn-default" data-bind="click: reload" title="${_('Refresh the table')}"><i class="fa fa-refresh" data-bind="css: { 'fa-spin blue' : refreshing }"></i> ${_('Refresh')}</a>
+                <!-- ko template: { if: !loading() && !database(), name: 'metastore-databases' } --><!-- /ko -->
+                <!-- ko with: database -->
+                  <i data-bind="visible: loading" class="fa fa-spinner fa-spin fa-2x margin-left-10" style="color: #999; display: none;"></i>
+                  <!-- ko template: { if: !loading() && !table(), name: 'metastore-tables' } --><!-- /ko -->
+                  <!-- ko with: table -->
+                    <!-- ko template: 'metastore-describe-table' --><!-- /ko -->
+                  <!-- /ko -->
+                <!-- /ko -->
               <!-- /ko -->
-              <!-- ko if: !table() -->
-              <a href="javascript: void(0);" class="btn btn-default" data-bind="click: reload" title="${_('Refresh the database')}"><i class="fa fa-refresh" data-bind="css: { 'fa-spin blue' : refreshing }"></i> ${_('Refresh')}</a>
-              <!-- /ko -->
-              <!-- /ko -->
-              <!-- ko if: !database() -->
-              <a href="javascript: void(0);" class="btn btn-default" data-bind="click: reload" title="${_('Refresh')}"><i class="fa fa-refresh" data-bind="css: { 'fa-spin blue' : loading }"></i> ${_('Refresh')}</a>
-              <!-- /ko -->
-              <!-- /ko -->
-              <!-- /ko -->
-            </div>
-
-            <!-- ko template: 'metastore-breadcrumbs' --><!-- /ko -->
-          </h1>
-
-          <!-- ko with: source -->
-          <!-- ko with: namespace -->
-          <!-- ko template: { if: !loading() && !database(), name: 'metastore-databases' } --><!-- /ko -->
-          <!-- ko with: database -->
-          <i data-bind="visible: loading" class="fa fa-spinner fa-spin fa-2x margin-left-10" style="color: #999; display: none;"></i>
-          <!-- ko template: { if: !loading() && !table(), name: 'metastore-tables' } --><!-- /ko -->
-          <!-- ko with: table -->
-            <!-- ko template: 'metastore-describe-table' --><!-- /ko -->
-          <!-- /ko -->
-          <!-- /ko -->
-          <!-- /ko -->
-          <!-- /ko -->
+            <!-- /ko -->
           <!-- /ko -->
         </div>
       </div>
     </div>
   </div>
   <!-- ko with: source -->
-  <!-- ko with: namespace -->
-  <div id="dropSingleTable" class="modal hide fade">
-    % if is_embeddable:
-    <form data-bind="submit: dropAndWatch" method="POST">
-      <input type="hidden" name="is_embeddable" value="true"/>
-      <input type="hidden" name="start_time" value=""/>
-      <input type="hidden" name="source_type" data-bind="value: $root.source().type"/>
-    % else:
-    <form method="POST">
-    % endif
-      ${ csrf_token(request) | n,unicode }
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="${ _('Close') }"><span aria-hidden="true">&times;</span></button>
-        <h2 class="modal-title">${_('Drop Table')}</h2>
+    <!-- ko with: namespace -->
+      <div id="dropSingleTable" class="modal hide fade">
+        % if is_embeddable:
+        <form data-bind="submit: dropAndWatch" method="POST">
+          <input type="hidden" name="is_embeddable" value="true"/>
+          <input type="hidden" name="start_time" value=""/>
+          <input type="hidden" name="source_type" data-bind="value: $root.source().type"/>
+        % else:
+        <form method="POST">
+        % endif
+          ${ csrf_token(request) | n,unicode }
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="${ _('Close') }"><span aria-hidden="true">&times;</span></button>
+            <h2 class="modal-title">${_('Drop Table')}</h2>
+          </div>
+          <div class="modal-body">
+            <div>${_('Do you really want to drop the table')} <span style="font-weight: bold;" data-bind="text: database() && database().table() ? database().table().catalogEntry.name : ''"></span>?</div>
+          </div>
+          <div class="modal-footer">
+            <input type="hidden" name="table_selection" data-bind="value: database() && database().table() ? database().table().catalogEntry.name : ''" />
+            <input type="button" class="btn" data-dismiss="modal" value="${_('No')}"/>
+            <input type="submit" data-bind="click: function (vm, e) { var $form = $(e.target).parents('form'); $form.attr('action', '/metastore/tables/drop/' + vm.database().catalogEntry.name); return true; }" class="btn btn-danger" value="${_('Yes, drop this table')}"/>
+          </div>
+        </form>
       </div>
-      <div class="modal-body">
-        <div>${_('Do you really want to drop the table')} <span style="font-weight: bold;" data-bind="text: database() && database().table() ? database().table().catalogEntry.name : ''"></span>?</div>
-      </div>
-      <div class="modal-footer">
-        <input type="hidden" name="table_selection" data-bind="value: database() && database().table() ? database().table().catalogEntry.name : ''" />
-        <input type="button" class="btn" data-dismiss="modal" value="${_('No')}"/>
-        <input type="submit" data-bind="click: function (vm, e) { var $form = $(e.target).parents('form'); $form.attr('action', '/metastore/tables/drop/' + vm.database().catalogEntry.name); return true; }" class="btn btn-danger" value="${_('Yes, drop this table')}"/>
-      </div>
-    </form>
-  </div>
-  <!-- /ko -->
+    <!-- /ko -->
   <!-- /ko -->
   <div id="import-data-modal" class="modal hide fade" style="display: block;width: 680px;margin-left: -340px!important;"></div>
 </div>
