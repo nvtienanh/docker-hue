@@ -12,7 +12,7 @@ This section goes into greater detail on how to build and reuse the components o
 
 ### Dependencies
 
-* The OS specific install instructions are listed in the [install guide](/administrator/installation/dependencies/)
+* The OS specific install instructions are listed in the [install guide]({{% param baseURL %}}administrator/installation/dependencies/)
 * Python 2.7+ (Python 3 support tracked in [HUE-8737](https://issues.cloudera.org/browse/HUE-8737))
 * Django (1.11 already included in the distribution)
 * Java (Java 1.8) (should go away after [HUE-8740](https://issues.cloudera.org/browse/HUE-8740))
@@ -20,6 +20,33 @@ This section goes into greater detail on how to build and reuse the components o
 * [Mako](http://www.makotemplates.org/) is the templating language
 * [Bootstrap](http://twitter.github.com/bootstrap/)
 * [Knockout js](http://knockoutjs.com/)
+
+### Quick Start
+
+Build once:
+
+    make apps
+
+Then start the dev server (which will auto reload):
+
+    ./build/env/bin/hue runserver
+
+If you are changing Javascript or CSS files, also start:
+
+    npm run dev
+
+Then it is recommended to use MySQL or PostGres as the [database](({{% param baseURL %}}).
+
+Open the `hue.ini` file in a text editor. Directly below the
+`[[database]]` line, add the following options (and modify accordingly for
+your MySQL setup):
+
+    host=localhost
+    port=3306
+    engine=mysql
+    user=hue
+    password=secretpassword
+    name=hue
 
 ### Javascript
 
@@ -677,15 +704,51 @@ and greatest in build technologies.
 
 ## Release
 
+Update the versions to the next release (current release +1):
+
+    :100644 100644 4db6d5f... f907d04... M	VERSION
+    :100644 100644 9332f95... 45b28ad... M	desktop/libs/librdbms/java/pom.xml
+    :100644 100644 551f62f... 694f021... M	maven/pom.xml
+
 How to count the number of commits since the last release and add them and the authors to the release notes:
 
     git log --oneline --since=2018-01-01 | grep 'release'
     git log --oneline --since=2018-01-01 | grep -n '6df64e3'
-    git log --oneline -1247 > scratch.txt
+    git log --oneline -449 > scratch.txt
 
     git log --pretty="%an" | sort | uniq > scratch.txt
 
+Pushing the release branch:
+
+    git push origin HEAD:branch-4.4.0
+
 Tagging the release:
 
-    git tag -a release-4.3.0 -m "release-4.3.0"
-    git push origin release-4.3.0
+    git tag -a release-4.4.0 -m "release-4.4.0"
+    git push origin release-4.4.0
+
+Building the tarball release:
+
+    make prod
+
+Source of the release: https://github.com/cloudera/hue/archive/release-4.4.0.zip
+
+Other things to update:
+
+* In Jira, setting the [release as shipped](https://issues.cloudera.org/projects/HUE?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page&status=all) and moving all non finished jiras to another target. Also archiving old releases.
+* Create the after next release tag in Jira and Blog
+* Update http://gethue.com 'Release' menu
+* Update http://demo.gethue.com/
+* Update Docker image https://hub.docker.com/u/gethue/
+* Update release date on https://en.wikipedia.org/wiki/Hue_(Software)
+
+Instructions:
+
+    docker build https://github.com/cloudera/hue.git#release-4.4.0 -t gethue/hue:4.4.0 -f tools/docker/hue/Dockerfile
+    docker tag gethue/hue:4.4.0 gethue/latest
+    docker images
+    docker login
+    docker push gethue/hue
+    docker push gethue/hue:4.4.0
+
+Then send release notes to hue-user, https://twitter.com/gethue!

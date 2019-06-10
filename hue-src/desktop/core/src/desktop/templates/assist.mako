@@ -17,12 +17,11 @@
 <%!
 from django.utils.translation import ugettext as _
 
+from dashboard.conf import HAS_SQL_ENABLED
 from filebrowser.conf import SHOW_UPLOAD_BUTTON
 from metadata.conf import has_catalog, OPTIMIZER
 from metastore.conf import ENABLE_NEW_CREATE_TABLE
 from notebook.conf import ENABLE_QUERY_BUILDER, ENABLE_QUERY_SCHEDULING, get_ordered_interpreters
-
-from dashboard.conf import HAS_SQL_ENABLED
 
 from desktop import appmanager
 from desktop import conf
@@ -326,7 +325,7 @@ from desktop.views import _ko
     <!-- ko with: selectedSource -->
       <!-- ko template: { ifnot: selectedNamespace, name: 'assist-namespaces-template' } --><!-- /ko -->
       <!-- ko with: selectedNamespace -->
-        <!-- ko template: { ifnot: selectedDatabase, name: 'assist-databases-template' }--><!-- /ko -->
+        <!-- ko template: { ifnot: selectedDatabase, name: 'assist-databases-template' } --><!-- /ko -->
         <!-- ko with: selectedDatabase -->
           <!-- ko template: { name: 'assist-tables-template' } --><!-- /ko -->
         <!-- /ko -->
@@ -744,8 +743,8 @@ from desktop.views import _ko
       <div class="assist-errors" data-bind="visible: ! loading() && hasErrors()">
         <span>${ _('Error loading contents.') }</span>
       </div>
-      <!-- /ko -->
     </div>
+    <!-- /ko -->
   </script>
 
   <script type="text/html" id="assist-hbase-header-actions">
@@ -1044,7 +1043,7 @@ from desktop.views import _ko
   </script>
 
   <script type="text/html" id="assist-panel-template">
-    <div class="assist-panel" data-bind="dropzone: { url: '/filebrowser/upload/file?dest=' + DROPZONE_HOME_DIR, params: {dest: DROPZONE_HOME_DIR}, paramName: 'hdfs_file', onComplete: function(path){ huePubSub.publish('assist.dropzone.complete', path); }, disabled: '${ not (hasattr(SHOW_UPLOAD_BUTTON, 'get') and SHOW_UPLOAD_BUTTON.get()) }' === 'True' }">
+    <div class="assist-panel" data-bind="dropzone: { url: '/filebrowser/upload/file?dest=' + DROPZONE_HOME_DIR, params: {dest: DROPZONE_HOME_DIR}, clickable: false, paramName: 'hdfs_file', onComplete: function(path){ huePubSub.publish('assist.dropzone.complete', path); }, disabled: '${ not (hasattr(SHOW_UPLOAD_BUTTON, 'get') and SHOW_UPLOAD_BUTTON.get()) }' === 'True' }">
       <!-- ko if: availablePanels().length > 1 -->
       <div class="assist-panel-switches">
         <!-- ko foreach: availablePanels -->
@@ -1297,10 +1296,20 @@ from desktop.views import _ko
 
         if (self.sourceIndex['solr']) {
           huePubSub.subscribe('assist.collections.refresh', function() {
-            var namespace = self.sourceIndex['solr'].selectedNamespace();
-            dataCatalog.getEntry({ sourceType: 'solr', namespace: namespace, compute: namespace.compute(), path: [] }).done(function (entry) {
-              entry.clearCache({ cascade: true });
-            });
+            var solrSource = self.sourceIndex['solr'];
+            var doRefresh = function () {
+              if (solrSource.selectedNamespace()) {
+                var assistDbNamespace = solrSource.selectedNamespace();
+                dataCatalog.getEntry({ sourceType: 'solr', namespace: assistDbNamespace.namespace, compute: assistDbNamespace.compute(), path: [] }).done(function (entry) {
+                  entry.clearCache({ cascade: true });
+                });
+              }
+            };
+            if (!solrSource.hasNamespaces()) {
+              solrSource.loadNamespaces(true).done(doRefresh);
+            } else {
+              doRefresh();
+            }
           });
         }
 
@@ -2638,7 +2647,7 @@ from desktop.views import _ko
           });
         };
 
-        var activeSnippetTypeSub = huePubSub.subscribe('active.snippet.type.changed', updateType);
+        var activeSnippetTypeSub = huePubSub.subscribe('active.snippet.type.changed', function (details) { updateType(details.type) });
 
         self.disposals.push(function () {
           activeSnippetTypeSub.remove();
@@ -2755,7 +2764,7 @@ from desktop.views import _ko
           <!-- ko hueSpinner: { spin: filter.querySpec() && filter.querySpec().query !== '' && someLoading(), inline: true,  center: true} --><!-- /ko -->
         </div>
 
-        <!-- ko if: HAS_OPTIMIZER && !isSolr() -->
+        <!-- ko if: showRisks -->
         <div class="assist-flex-header assist-divider"><div class="assist-inner-header">${ _('Query Analysis') }</div></div>
         <div class="assist-flex-third">
           <!-- ko if: ! activeRisks().hints -->
@@ -2845,6 +2854,20 @@ from desktop.views import _ko
         self.disposals = [];
         self.isSolr = ko.observable(false);
         self.activeTab = params.activeTab;
+
+        self.sourceType = ko.observable(params.sourceType());
+
+        self.showRisks = ko.pureComputed(function () {
+          return window.HAS_OPTIMIZER && !self.isSolr() && (self.sourceType() === 'impala' || self.sourceType() === 'hive')
+        });
+
+        var typeSub = huePubSub.subscribe('active.snippet.type.changed', function (details) {
+          self.sourceType(details.type);
+        });
+
+        self.disposals.push(function () {
+          typeSub.remove();
+        });
 
         self.uploadingTableStats = ko.observable(false);
         self.activeStatement = ko.observable();
@@ -3422,6 +3445,8 @@ from desktop.views import _ko
           }).extend({ rateLimit: 300 })
         };
 
+        self.sourceType = ko.observable('solr');
+
         self.activeTables = ko.observableArray();
 
         self.filteredTables = AssistantUtils.getFilteredTablesPureComputed(self);
@@ -3444,6 +3469,8 @@ from desktop.views import _ko
           if (!collectionName) {
             return;
           }
+
+          self.sourceType = ko.observable(collection.engine());
 
           var assistDbSource = new AssistDbSource({
             i18n : i18n,
@@ -3540,7 +3567,7 @@ from desktop.views import _ko
     <!-- ko if: visible -->
     <div class="right-assist-contents">
       <!-- ko if: editorAssistantTabAvailable-->
-      <div data-bind="component: { name: 'editor-assistant-panel', params: { activeTab: activeTab } }, visible: activeTab() === 'editorAssistant'"></div>
+      <div data-bind="component: { name: 'editor-assistant-panel', params: { activeTab: activeTab, sourceType: sourceType } }, visible: activeTab() === 'editorAssistant'"></div>
       <!-- /ko -->
 
       <!-- ko if: functionsTabAvailable -->
@@ -3577,6 +3604,7 @@ from desktop.views import _ko
 
         self.activeTab = ko.observable();
         self.visible = params.visible;
+        self.sourceType = ko.observable();
 
         self.editorAssistantTabAvailable = ko.observable(false);
         self.dashboardAssistantTabAvailable = ko.observable(false);
@@ -3626,10 +3654,11 @@ from desktop.views import _ko
           }
         };
 
-        var updateContentsForType = function (type) {
+        var updateContentsForType = function (type, isSqlDialect) {
+          self.sourceType(type);
           self.functionsTabAvailable(type === 'hive' || type === 'impala' || type === 'pig');
           self.langRefTabAvailable(type === 'impala');
-          self.editorAssistantTabAvailable((!window.IS_EMBEDDED || window.EMBEDDED_ASSISTANT_ENABLED) && (type === 'hive' || type === 'impala'));
+          self.editorAssistantTabAvailable((!window.IS_EMBEDDED || window.EMBEDDED_ASSISTANT_ENABLED) && isSqlDialect);
           self.dashboardAssistantTabAvailable(type === 'dashboard');
           self.schedulesTabAvailable(false);
           if (type !== 'dashboard') {
@@ -3647,12 +3676,12 @@ from desktop.views import _ko
           updateTabs();
         };
 
-        var snippetTypeSub = huePubSub.subscribe('active.snippet.type.changed', updateContentsForType);
+        var snippetTypeSub = huePubSub.subscribe('active.snippet.type.changed', function (details) { updateContentsForType(details.type, details.isSqlDialect) });
         self.disposals.push(snippetTypeSub.remove.bind(snippetTypeSub));
 
         huePubSub.subscribe('set.current.app.name', function (appName) {
           if (appName === 'dashboard') {
-            updateContentsForType(appName);
+            updateContentsForType(appName, false);
           }
         });
         huePubSub.publish('get.current.app.name');

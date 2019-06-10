@@ -60,7 +60,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: altus.{{ .Values.domain }}
+  - host: {{ .Values.domain }}
     http:
       paths:
       - path: /
