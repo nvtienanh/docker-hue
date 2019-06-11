@@ -64,8 +64,18 @@ RUN rm -rf /hue
 
 RUN ./build/env/bin/pip install psycopg2-binary
 
-COPY tools/docker/hue/conf desktop/conf
-COPY tools/docker/hue/startup.sh .
+# COPY tools/docker/hue/startup.sh .
+COPY tools/docker/hue/entrypoint.sh .
+
+ENV HIVE_HOME=/opt/hive
+ENV HADOOP_CONF_DIR=/etc/hadoop
+ENV MULTIHOMED_NETWORK=1
+
+#Custom configuration goes here
+COPY tools/docker/hue/hue-conf desktop/conf
+COPY tools/docker/hue/hive-conf ${HIVE_HOME}/conf
+COPY tools/docker/hue/hadoop-conf ${HADOOP_CONF_DIR}
 
 EXPOSE 8888
-CMD ["./startup.sh"]
+# CMD ["./startup.sh"]
+CMD ["./entrypoint.sh"]
