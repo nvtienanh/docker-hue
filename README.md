@@ -18,8 +18,8 @@ Sử dụng
 
 Xem ví dụ chạy Hue bằng docker-compose:
 - [Hue](https://github.com/nvtienanh/docker-compose/tree/master/hue)
-- [Hue - Ldap](https://github.com/nvtienanh/docker-compose/tree/master/hue)
-- [Hue - Hive - Ldap](https://github.com/nvtienanh/docker-compose/tree/master/hue)
+- [Hue - Ldap](https://github.com/nvtienanh/docker-compose/tree/master/hue-ldap)
+- [Hue - Hive - Ldap](https://github.com/nvtienanh/docker-compose/tree/master/hue-hive-ldap)
 - [Hue = Hive - Ldap - Zeppelin]()
 
 Liên hệ
