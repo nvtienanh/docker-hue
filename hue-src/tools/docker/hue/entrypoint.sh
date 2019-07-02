@@ -114,8 +114,8 @@ do
     wait_for_it ${i}
 done
 
+exec $@
+
 ./build/env/bin/hue syncdb --noinput
 ./build/env/bin/hue migrate
 ./build/env/bin/supervisor
-
-exec $@

@@ -67,6 +67,8 @@ RUN ./build/env/bin/pip install psycopg2-binary
 # COPY tools/docker/hue/startup.sh .
 COPY tools/docker/hue/entrypoint.sh .
 
+RUN chmod a+x entrypoint.sh
+
 ENV HIVE_HOME=/opt/hive
 ENV HADOOP_CONF_DIR=/etc/hadoop
 ENV MULTIHOMED_NETWORK=1
