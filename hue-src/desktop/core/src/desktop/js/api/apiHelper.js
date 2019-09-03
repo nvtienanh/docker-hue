@@ -29,10 +29,10 @@ const EXECUTE_API_PREFIX = '/notebook/api/execute/';
 const DOCUMENTS_API = '/desktop/api2/doc/';
 const DOCUMENTS_SEARCH_API = '/desktop/api2/docs/';
 const FETCH_CONFIG = '/desktop/api2/get_config/';
-const HDFS_API_PREFIX = '/filebrowser/view=/';
-const ADLS_API_PREFIX = '/filebrowser/view=adl:/';
+const HDFS_API_PREFIX = '/filebrowser/view=' + encodeURIComponent('/');
+const ADLS_API_PREFIX = '/filebrowser/view=' + encodeURIComponent('adl:/');
 const GIT_API_PREFIX = '/desktop/api/vcs/contents/';
-const S3_API_PREFIX = '/filebrowser/view=S3A://';
+const S3_API_PREFIX = '/filebrowser/view=' + encodeURIComponent('S3A://');
 const IMPALA_INVALIDATE_API = '/impala/api/invalidate';
 const CONFIG_SAVE_API = '/desktop/api/configurations/save/';
 const CONFIG_APPS_API = '/desktop/api/configurations';
@@ -169,20 +169,8 @@ class ApiHelper {
     const self = this;
     self.queueManager = apiQueueManager;
 
-    huePubSub.subscribe('assist.clear.hdfs.cache', () => {
-      $.totalStorage(self.getAssistCacheIdentifier({ sourceType: 'hdfs' }), {});
-    });
-
-    huePubSub.subscribe('assist.clear.adls.cache', () => {
-      $.totalStorage(self.getAssistCacheIdentifier({ sourceType: 'adls' }), {});
-    });
-
     huePubSub.subscribe('assist.clear.git.cache', () => {
       $.totalStorage(self.getAssistCacheIdentifier({ sourceType: 'git' }), {});
-    });
-
-    huePubSub.subscribe('assist.clear.s3.cache', () => {
-      $.totalStorage(self.getAssistCacheIdentifier({ sourceType: 's3' }), {});
     });
 
     huePubSub.subscribe('assist.clear.collections.cache', () => {
@@ -223,6 +211,10 @@ class ApiHelper {
         clearAllCaches();
       }
     }
+  }
+
+  clearStorageCache(sourceType) {
+    $.totalStorage(this.getAssistCacheIdentifier({ sourceType: sourceType }), {});
   }
 
   hasExpired(timestamp, cacheType) {
@@ -418,7 +410,7 @@ class ApiHelper {
     const request = $.post({
       url: url,
       data: data,
-      dataType: options.dataType
+      dataType: options && options.dataType
     })
       .done(data => {
         if (self.successResponseIsError(data)) {
@@ -470,8 +462,8 @@ class ApiHelper {
 
   /**
    * @param {string} url
-   * @param {Object} data
-   * @param {Object} options
+   * @param {Object} [data]
+   * @param {Object} [options]
    * @param {function} [options.successCallback]
    * @param {function} [options.errorCallback]
    * @param {boolean} [options.silenceErrors]
@@ -1524,7 +1516,7 @@ class ApiHelper {
       source_type: options.sourceType
     };
     if (options.path.length === 1) {
-      url = '/metastore/databases/' + options.path[1] + '/alter';
+      url = '/metastore/databases/' + options.path[0] + '/alter';
       data.properties = ko.mapping.toJSON(options.properties);
     } else if (options.path.length === 2) {
       url = '/metastore/table/' + options.path[0] + '/' + options.path[1] + '/alter';
@@ -1536,7 +1528,7 @@ class ApiHelper {
           data.new_table_name = options.properties.name;
         }
       }
-    } else if (options.path > 2) {
+    } else if (options.path.length > 2) {
       url = '/metastore/table/' + options.path[0] + '/' + options.path[1] + '/alter_column';
       data.column = options.path.slice(2).join('.');
       if (options.properties) {

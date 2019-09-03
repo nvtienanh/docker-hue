@@ -212,7 +212,10 @@ class Snippet {
 
     self.inFocus.subscribe(newValue => {
       if (newValue) {
-        huePubSub.publish('active.snippet.type.changed', { type: self.type(), isSqlDialect: self.isSqlDialect() });
+        huePubSub.publish('active.snippet.type.changed', {
+          type: self.type(),
+          isSqlDialect: self.isSqlDialect()
+        });
       }
     });
 
@@ -1262,7 +1265,7 @@ class Snippet {
                   }
                 }
                 if (!self.result.handle().has_more_statements && self.parentVm.successUrl()) {
-                  window.location.href = self.parentVm.successUrl(); // Not used anymore in Hue 4
+                  huePubSub.publish('open.link', self.parentVm.successUrl()); // Not used anymore in Hue 4
                 }
               } else if (self.status() === STATUS.success) {
                 self.progress(99);
@@ -1380,6 +1383,7 @@ class Snippet {
 
     this.executor.executeNext().then(executionResult => {
       this.stopLongOperationTimeout();
+      this.result.clear();
       this.result.update(executionResult).then(() => {
         if (this.result.data().length) {
           this.currentQueryTab('queryResults');
@@ -1572,7 +1576,6 @@ class Snippet {
 
   format() {
     const self = this;
-    console.log(self);
     if (self.isSqlDialect()) {
       apiHelper
         .formatSql({
@@ -1805,6 +1808,7 @@ class Snippet {
       },
       data => {
         if (data.status === 0) {
+          // eslint-disable-next-line no-restricted-syntax
           console.log(data.statement_similarity);
         } else {
           $(document).trigger('error', data.message);

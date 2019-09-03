@@ -30,15 +30,16 @@ RUN apt-get update -y && apt-get install -y \
   maven \
   gcc \
   swig \
-  openssl \
+  # openssl \ # Breaks build
   xmlsec1 \
   libxmlsec1-openssl \
-   && rm -rf /var/lib/apt/lists/*
+  hugo \
+  && rm -rf /var/lib/apt/lists/*
 
 ADD . /hue
 WORKDIR /hue
 
-# Not doing a `make prod` equivalent, so manually getting production ini
+# Not doing a `make prod`, so manually getting production ini
 RUN rm desktop/conf/*
 COPY desktop/conf.dist desktop/conf
 
@@ -49,35 +50,22 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - \
 RUN PREFIX=/usr/share make install
 RUN useradd -ms /bin/bash hue && chown -R hue /usr/share/hue
 
-WORKDIR  /usr/share/hue
+# Build the docs (not in Makefile yet)
+# RUN hugo --source docs/docs-site
 
-# Temp fix until npm-install target can use PREFIX in make install
-RUN cp /hue/package.json .
-RUN cp /hue/webpack.config*.js ./
-RUN npm install
-RUN npm run webpack
-RUN npm run webpack-login
-RUN npm run webpack-workers
-RUN ./build/env/bin/hue collectstatic --noinput
-
+# Only keep install dir
+WORKDIR /usr/share/hue
 RUN rm -rf /hue
 
+# Install DB connectors
 RUN ./build/env/bin/pip install psycopg2-binary
+RUN ./build/env/bin/pip install redis==2.10.6
+RUN ./build/env/bin/pip install django_redis
+RUN ./build/env/bin/pip install flower
+RUN ./build/env/bin/pip install gevent
 
-# COPY tools/docker/hue/startup.sh .
-COPY tools/docker/hue/entrypoint.sh .
-
-RUN chmod a+x entrypoint.sh
-
-ENV HIVE_HOME=/opt/hive
-ENV HADOOP_CONF_DIR=/etc/hadoop
-ENV MULTIHOMED_NETWORK=1
-
-#Custom configuration goes here
-COPY tools/docker/hue/hue-conf desktop/conf
-COPY tools/docker/hue/hive-conf ${HIVE_HOME}/conf
-COPY tools/docker/hue/hadoop-conf ${HADOOP_CONF_DIR}
+COPY tools/docker/hue/conf desktop/conf
+COPY tools/docker/hue/startup.sh .
 
 EXPOSE 8888
-# CMD ["./startup.sh"]
-CMD ["./entrypoint.sh"]
+CMD ["./startup.sh"]

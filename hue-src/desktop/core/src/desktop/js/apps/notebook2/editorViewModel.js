@@ -30,6 +30,7 @@ class EditorViewModel {
   constructor(editorId, notebooks, options, CoordinatorEditorViewModel, RunningCoordinatorModel) {
     const self = this;
 
+    // eslint-disable-next-line no-restricted-syntax
     console.log('Notebook 2 enabled.');
 
     self.editorId = editorId;
@@ -206,9 +207,13 @@ class EditorViewModel {
 
     huePubSub.subscribe(
       'get.active.snippet.type',
-      () => {
+      callback => {
         withActiveSnippet(activeSnippet => {
-          huePubSub.publish('set.active.snippet.type', activeSnippet.type());
+          if (callback) {
+            callback(activeSnippet.type());
+          } else {
+            huePubSub.publish('set.active.snippet.type', activeSnippet.type());
+          }
         });
       },
       self.huePubSubId
@@ -436,7 +441,10 @@ class EditorViewModel {
 
   newNotebook(editorType, callback, queryTab) {
     const self = this;
-    huePubSub.publish('active.snippet.type.changed', { type: editorType, isSqlDialect: editorType ? self.getSnippetViewSettings(editorType).sqlDialect : undefined });
+    huePubSub.publish('active.snippet.type.changed', {
+      type: editorType,
+      isSqlDialect: editorType ? self.getSnippetViewSettings(editorType).sqlDialect : undefined
+    });
     $.post(
       '/notebook/api/create_notebook',
       {
@@ -457,7 +465,12 @@ class EditorViewModel {
           if (window.location.getParameter('type') === '') {
             hueUtils.changeURLParameter('type', self.editorType());
           }
-          huePubSub.publish('active.snippet.type.changed', { type: editorType, isSqlDialect: editorType ? self.getSnippetViewSettings(editorType).sqlDialect : undefined });
+          huePubSub.publish('active.snippet.type.changed', {
+            type: editorType,
+            isSqlDialect: editorType
+              ? self.getSnippetViewSettings(editorType).sqlDialect
+              : undefined
+          });
         }
 
         if (typeof callback !== 'undefined' && callback !== null) {
@@ -486,7 +499,10 @@ class EditorViewModel {
           if (typeof skipUrlChange === 'undefined' && !self.isNotificationManager()) {
             if (self.editorMode()) {
               self.editorType(data.document.type.substring('query-'.length));
-              huePubSub.publish('active.snippet.type.changed', { type: self.editorType(), isSqlDialect: self.getSnippetViewSettings(self.editorType()).sqlDialect });
+              huePubSub.publish('active.snippet.type.changed', {
+                type: self.editorType(),
+                isSqlDialect: self.getSnippetViewSettings(self.editorType()).sqlDialect
+              });
               self.changeURL(
                 self.URLS.editor + '?editor=' + data.document.id + '&type=' + self.editorType()
               );
