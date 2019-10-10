@@ -26,19 +26,12 @@
 %>
 
 <%namespace name="actionbar" file="actionbar.mako" />
-<%namespace name="assist" file="/assist.mako" />
 
 %if not is_embeddable:
 ${ commonheader(_("Importer"), "indexer", user, request, "60px") | n,unicode }
 
-<script src="${ static('metastore/js/metastore.ko.js') }"></script>
-
-${ assist.assistJSModels() }
-
 <link rel="stylesheet" href="${ static('notebook/css/notebook.css') }">
 <link rel="stylesheet" href="${ static('notebook/css/notebook-layout.css') }">
-${ assist.assistPanel() }
-
 %endif
 
 <link rel="stylesheet" href="${ static('indexer/css/importer.css') }" type="text/css">
@@ -1564,7 +1557,9 @@ ${ assist.assistPanel() }
           }
 
           setTimeout(function () {
-            var types = type.args.filter(function(x){ return x && x.type !== 'checkbox'});
+            var types = type.args.filter(function (x){
+              return x && (x.type !== 'checkbox' || x.name === 'hasHeader');
+            });
             for (var i = 0; i < types.length; i++) {
               self[types[i].name].subscribe(function() {
                 // Update the data preview when tweaking Format options on step 1
@@ -2828,13 +2823,13 @@ ${ assist.assistPanel() }
                         var db = match[1];
                         dataCatalog.getEntry({ sourceType: snippet.type(), namespace: self.namespace(), compute: self.compute(), path: [ db ]}).done(function (dbEntry) {
                           dbEntry.clearCache({ invalidate: 'invalidate', silenceErrors: true }).done(function () {
-                            window.location.href = self.editorVM.selectedNotebook().onSuccessUrl();
+                            huePubSub.publish('open.link', self.editorVM.selectedNotebook().onSuccessUrl());
                           })
                         });
                       } else {
                         dataCatalog.getEntry({ sourceType: snippet.type(), namespace: self.namespace(), compute: self.compute(), path: []}).done(function (sourceEntry) {
                           sourceEntry.clearCache({ silenceErrors: true }).done(function () {
-                            window.location.href = self.editorVM.selectedNotebook().onSuccessUrl();
+                            huePubSub.publish('open.link', self.editorVM.selectedNotebook().onSuccessUrl());
                           })
                         });
                       }

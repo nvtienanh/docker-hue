@@ -29,7 +29,6 @@ SUFFIX = is_mini and "-mini" or ""
 
 % if not is_embeddable:
 ${ commonheader("Job Browser", "jobbrowser", user, request) | n,unicode }
-<%namespace name="assist" file="/assist.mako" />
 % endif
 
 <span class="notebook">
@@ -65,9 +64,6 @@ ${ commonheader("Job Browser", "jobbrowser", user, request) | n,unicode }
 % endif
 
 % if not is_embeddable:
-  ${ assist.assistJSModels() }
-  ${ assist.assistPanel() }
-
   <a title="${_('Toggle Assist')}" class="pointer show-assist" data-bind="visible: !$root.isLeftPanelVisible() && $root.assistAvailable(), click: function() { $root.isLeftPanelVisible(true); }">
     <i class="fa fa-chevron-right"></i>
   </a>
@@ -1428,7 +1424,7 @@ ${ commonheader("Job Browser", "jobbrowser", user, request) | n,unicode }
           <!-- ko if: doc_url -->
           <li class="nav-header">${ _('Id') }</li>
           <li>
-            <a data-bind="attr: {href: doc_url}" target="_blank" title="${ _('Open in impalad') }">
+            <a data-bind="attr: { href: doc_url_modified }" target="_blank" title="${ _('Open in impalad') }">
               <span data-bind="text: id"></span>
             </a>
             <!-- ko if: $root.isMini() -->
@@ -2333,6 +2329,29 @@ ${ commonheader("Job Browser", "jobbrowser", user, request) | n,unicode }
       });
       %endif
       self.doc_url = ko.observableDefault(job.doc_url);
+      self.doc_url_modified = ko.computed(function () {
+        var url = self.doc_url();
+        if (window.KNOX_BASE_URL.length && window.URL && url) { // KNOX
+          try {
+            var parsedDocUrl = new URL(url);
+            var parsedKnoxUrl = new URL(window.KNOX_BASE_URL);
+            parsedDocUrl.hostname = parsedKnoxUrl.hostname;
+            parsedDocUrl.protocol = parsedKnoxUrl.protocol;
+            parsedDocUrl.port = parsedKnoxUrl.port;
+            var service = url.indexOf('livy') >= 0 ? '/livy' : '/impala';
+            parsedDocUrl.pathname = parsedKnoxUrl.pathname + service + parsedDocUrl.pathname;
+            return parsedDocUrl.toString();
+          } catch (e) {
+            return url;
+          }
+        } else if (window.KNOX_BASE_PATH.length && window.URL) { // DWX
+          var parsedDocUrl = new URL(url);
+          var service = url.indexOf('livy') >= 0 ? '/livy' : '/impala';
+          parsedDocUrl.pathname = parsedKnoxUrl.pathname + service + window.KNOX_BASE_PATH;
+        } else {
+          return url;
+        }
+      });
       self.name = ko.observableDefault(job.name || job.id);
       self.type = ko.observableDefault(job.type);
       self.applicationType = ko.observableDefault(job.applicationType || '');
@@ -2639,7 +2658,22 @@ ${ commonheader("Job Browser", "jobbrowser", user, request) | n,unicode }
             var requests = [];
             if (['schedule', 'workflow'].indexOf(vm.job().type()) >= 0) {
               window.hueUtils.deleteAllEmptyStringKey(data.app); // It's preferable for our backend to return empty strings for various values in order to initialize them, but they shouldn't overwrite any values that are currently set.
+              var selectedIDs = []
+              if (vm.job().coordinatorActions()) {
+                selectedIDs = vm.job().coordinatorActions().selectedJobs().map(
+                  function(coordinatorAction) {
+                      return coordinatorAction.id();
+                  }
+                );
+              }
               vm.job = ko.mapping.fromJS(data.app, {}, vm.job);
+              if (selectedIDs.length > 0) {
+                vm.job().coordinatorActions().selectedJobs(
+                  vm.job().coordinatorActions().apps().filter(function(coordinatorAction){
+                      return selectedIDs.indexOf(coordinatorAction.id()) != -1
+                  })
+                )
+              }
             } else {
               requests.push(vm.job().fetchStatus());
             }
@@ -3251,7 +3285,7 @@ ${ commonheader("Job Browser", "jobbrowser", user, request) | n,unicode }
           return self.cluster() && self.cluster()['type'] == 'altus-dw2';
         };
         var schedulerInterfaceCondition = function () {
-          return '${ user.has_hue_permission(action="access", app="oozie") }' == 'True' && (!self.cluster() || self.cluster()['type'].indexOf('altus') == -1);
+          return '${ user.has_hue_permission(action="access", app="oozie") }' == 'True' && (!self.cluster() || self.cluster()['type'].indexOf('altus') == -1) && self.appConfig() && self.appConfig()['scheduler'];
         };
         var schedulerExtraInterfaceCondition = function () {
           return '${ is_mini }' == 'False' && schedulerInterfaceCondition();

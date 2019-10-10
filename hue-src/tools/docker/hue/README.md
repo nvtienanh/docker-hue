@@ -28,17 +28,19 @@ sudo docker build . -t hue -f tools/docker/hue/Dockerfile
 
 **Note**
 
-Feel free to replace `-t hue` in all the commands by your own docker repository and image tag, e.g. `gethue/hue:latest`
+Feel free to replace `-t hue` in all the commands by your own docker repository and image tag, e.g. `gethue/hue:latest`, `docker-account/hue:4.5.0`
 
 **Tag and push the image to the container registry**
 
 ```
-docker build . -t docker-registry.gethue.com/gethue/hue:4.4.0
-docker push docker-registry.gethue.com/gethue/hue:4.4.0
+docker build . -t gethue/hue:latest
+docker push docker.io/gethue/hue:latest
 ```
 
 
 ## Run the image
+
+Hue can run in one line via the `docker` command (but needs to be configured to point to a real database). To have a zero configuration start use the `docker-compose` section or [kubernetes](tools/kubernetes/) instead.
 
 ### Docker
 
@@ -54,21 +56,65 @@ Hue should then be up and running on your default Docker IP on the port 8888, so
 #### Configuration
 
 By default the Hue container is using
-[``tools/docker/hue/conf/z-defaults.ini``](/tools/docker/hue/conf/z-defaults.ini) on top of [``desktop/conf/hue.ini``](/desktop/conf/hue.ini) which assumes localhost for all the data services and uses and embedded sqlite database that will error out.
+[``tools/docker/hue/conf/hue-overrides.ini``](/tools/docker/hue/conf/hue-overrides.ini) on top of [``desktop/conf/hue.ini``](/desktop/conf/hue.ini) which assumes localhost for all the data services and uses and embedded sqlite database that will error out.
 
 The default ini is used for configuration at the image build time (e.g. which apps to always disable or certain settings like [banner customization](http://gethue.com/add-a-top-banner-to-hue/)).
 
-In order to be useful, configure Hue at runtime to point to external services. The simplified ini [``hue.ini``](/tools/docker/hue/hue.ini) can be edited before starting Hue via:
+In order to be useful, configure Hue at runtime to point to external services. The simplified ini [``hue-overrides.ini``](/tools/docker/hue/conf/hue-overrides.ini) can be edited before starting Hue via:
 
 ```
-docker run -it -p 8888:8888 -v $PWD/tools/docker/hue/hue.ini:/usr/share/hue/desktop/conf/z-hue.ini gethue/hue
+cd tools/docker/hue
+cp conf/hue-overrides.ini hue.ini
 ```
 
-or copy the [``desktop/conf.dist/hue.ini``](/desktop/conf.dist/hue.ini):
+Edit the database settings in `hue.ini` for one of these two databases. Do not forget to create a 'hue' database too.
+
+Postgres
 
 ```
-cp desktop/conf.dist/hue.ini .
+    [desktop]
+    [[database]]
+    engine=postgresql_psycopg2
+    host=127.0.0.1
+    port=5432
+    user=hue
+    password=hue
+    name=hue
+```
 
+MySql
+
+```
+    [desktop]
+    [[database]]
+    engine=mysql
+    host=127.0.0.1
+    port=3306
+    user=root
+    password=secret
+    name=hue
+```
+
+If you want to be able to query a database out of the box, update the connector interpreters accordingly, e.g.:
+
+```
+[notebook]
+
+  # One entry for each type of snippet.
+  [[interpreters]]
+    # Define the name and how to connect and execute the language.
+    # http://cloudera.github.io/hue/latest/administrator/configuration/editor/
+
+    [[[mysql]]]
+      name = MySQL
+      interface=sqlalchemy
+      ## https://docs.sqlalchemy.org/en/latest/dialects/mysql.html
+      options='{"url": "mysql://root:secret@database:3306/hue"}'
+```
+
+Then start the Hue server:
+
+```
 docker run -it -p 8888:8888 -v $PWD/hue.ini:/usr/share/hue/desktop/conf/z-hue.ini gethue/hue
 ```
 
@@ -79,13 +125,16 @@ If for example the database is pointing to your localhost, if using Docker on Li
     sudo docker run -it -p 8888:8888 -v $PWD/desktop/conf/pseudo-distributed.ini:/usr/share/hue/desktop/conf/z-hue.ini --network="host" gethue/hue
 
 
-#### Docker Compose
+### Docker Compose
+
+Docker compose allows to start all the required services in one command line.
+
+This will start a Hue server as well as a MySQL database by default. Only the MySQL interpreter is configured in [``tools/docker/hue/conf/hue-overrides.ini``](/tools/docker/hue/conf/hue-overrides.ini).
 
 Assuming we have a local ``hue.ini`` as shown in the previous section:
 
 ```
 cd tools/docker/hue
-cp docker-compose.yml.sample docker-compose.yml
 ```
 
 Then:
@@ -94,6 +143,11 @@ Then:
 docker-compose up -d
 ```
 
+And to stop:
+
+```
+docker-compose down
+```
 
 **Note**
 If http://127.0.0.1:8888 does not work, get the IP of the docker container with:

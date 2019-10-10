@@ -24,10 +24,11 @@ from desktop.views import commonheader, commonfooter, _ko
 from beeswax.conf import LIST_PARTITIONS_LIMIT
 
 from metastore.conf import ENABLE_NEW_CREATE_TABLE
+
+from webpack_loader.templatetags.webpack_loader import render_bundle
 %>
 
 <%namespace name="actionbar" file="actionbar.mako" />
-<%namespace name="assist" file="/assist.mako" />
 <%namespace name="components" file="components.mako" />
 
 <%
@@ -43,8 +44,6 @@ ${ commonheader(_("Metastore"), app_name, user, request) | n,unicode }
 
 <script src="${ static('desktop/ext/js/jquery/plugins/jquery.mousewheel.min.js') }"></script>
 
-${ assist.assistJSModels() }
-
 <link rel="stylesheet" href="${ static('notebook/css/notebook-layout.css') }">
 <style type="text/css">
 % if conf.CUSTOM.BANNER_TOP_HTML.get():
@@ -56,8 +55,6 @@ ${ assist.assistJSModels() }
   }
 % endif
 </style>
-
-${ assist.assistPanel() }
 % endif
 
 <script src="${ static('desktop/ext/js/wysihtml5-0.3.0.min.js') }"></script>
@@ -69,11 +66,13 @@ ${ assist.assistPanel() }
 <link rel="stylesheet" href="${ static('desktop/ext/css/bootstrap-wysihtml5-0.0.2.css') }">
 <link rel="stylesheet" href="${ static('notebook/css/notebook.css') }">
 
+## ${ render_bundle('vendors~tableBrowser') | n,unicode }
+${ render_bundle('tableBrowser') | n,unicode }
+
 <span class="notebook">
 
 ${ components.menubar(is_embeddable) }
 
-<script src="${ static('metastore/js/metastore.ko.js') }"></script>
 <link rel="stylesheet" href="${ static('metastore/css/metastore.css') }" type="text/css">
 
 <script type="text/html" id="metastore-breadcrumbs">
@@ -395,7 +394,7 @@ ${ components.menubar(is_embeddable) }
 </script>
 
 <script type="text/html" id="metastore-td-description">
-% if has_write_access:
+  <!-- ko ifnot: window.HAS_READ_ONLY_CATALOG -->
   <div data-bind="visibleOnHover: { selector: '.editable-inline-action' }">
     <div data-bind="editable: comment, editableOptions: {
         mode: 'inline',
@@ -414,14 +413,14 @@ ${ components.menubar(is_embeddable) }
       }">
       ${ _('Add a description...') }</div>
   </div>
-% else:
+  <!-- /ko -->
+  <!-- ko if: window.HAS_READ_ONLY_CATALOG -->
   <span style="white-space: pre;" data-bind="text: comment"></span>
-% endif
+  <!-- /ko -->
 </script>
 
 <script type="text/html" id="metastore-main-description">
-% if has_write_access:
-  <!-- ko if: $root.navigatorEnabled() -->
+  <!-- ko if: $root.navigatorEnabled() && !window.HAS_READ_ONLY_CATALOG -->
   <div class="hue-table-browser-desc-container" data-bind="visibleOnHover: { selector: '.editable-inline-action' }">
     <div class="hue-table-browser-desc">
       <div data-bind="editable: comment, editableOptions: {
@@ -443,12 +442,9 @@ ${ components.menubar(is_embeddable) }
     </div>
   </div>
   <!-- /ko -->
-  <!-- ko ifnot: $root.navigatorEnabled() -->
+  <!-- ko if: !$root.navigatorEnabled() || window.HAS_READ_ONLY_CATALOG -->
   <div data-bind="text: comment, attr: { title: comment }" class="table-description"></div>
   <!-- /ko -->
-% else:
-  <div data-bind="text: comment, attr: { title: comment }" class="table-description"></div>
-%endif
 </script>
 
 <script type="text/html" id="metastore-nav-tags">
@@ -1049,141 +1045,6 @@ ${ components.menubar(is_embeddable) }
     queryAndWatchUrl('/notebook/browse/' + catalogEntry.path.join('/') + '/', catalogEntry.getSourceType(),
             catalogEntry.namespace && catalogEntry.namespace.id, catalogEntry.compute)
   }
-
-  (function () {
-    if (ko.options) {
-      ko.options.deferUpdates = true;
-    }
-
-    $(document).ready(function () {
-      var options = {
-        user: '${ user.username }',
-        optimizerEnabled: '${ is_optimizer_enabled }' === 'True',
-        navigatorEnabled: '${ is_navigator_enabled }' === 'True',
-        optimizerUrl: '${ optimizer_url }',
-        navigatorUrl: '${ navigator_url }',
-        sourceType: '${ source_type }'
-      };
-
-      var viewModel = new MetastoreViewModel(options);
-
-      huePubSub.subscribe('metastore.scroll.to.top', function () {
-        $('${ MAIN_SCROLLABLE }').scrollTop(0);
-      });
-
-      huePubSub.subscribe('metastore.clear.selection', function () {
-        viewModel.sources().forEach(function (source) {
-          source.namespaces().forEach(function (namespace) {
-            namespace.selectedDatabases.removeAll();
-            namespace.databases().forEach(function (database) {
-              database.selectedTables.removeAll();
-            })
-          })
-        });
-      }, 'metastore');
-
-      viewModel.currentTab.subscribe(function(tab){
-        if (tab === 'relationships') {
-          // viewModel.database().table().getRelationships();
-        } else if (tab === 'sample') {
-          var selector = 'samplesTable';
-          % if conf.CUSTOM.BANNER_TOP_HTML.get():
-            var bannerTopHeight = 30;
-          % else:
-            var bannerTopHeight = 0;
-          % endif
-          if ($(selector).parents('.dataTables_wrapper').length == 0){
-            hueUtils.waitForRendered(selector, function(el){ return el.find('td').length > 0 }, function(){
-              $(selector).dataTable({
-                "bPaginate": false,
-                "bLengthChange": false,
-                "bInfo": false,
-                "bDestroy": true,
-                "bFilter": false,
-                "bAutoWidth": false,
-                "oLanguage": {
-                  "sEmptyTable": "${_('No data available')}",
-                  "sZeroRecords": "${_('No matching records')}"
-                },
-                "fnDrawCallback": function (oSettings) {
-                  $(selector).parents('.dataTables_wrapper').css('overflow-x', 'hidden');
-                  $(selector).jHueTableExtender2({
-                    fixedHeader: true,
-                    fixedFirstColumn: true,
-                    includeNavigator: false,
-                    lockSelectedRow: false,
-                    parentId: 'sample',
-                    classToRemove: 'sample-table',
-                    mainScrollable: '${ MAIN_SCROLLABLE }',
-                    % if is_embeddable:
-                    stickToTopPosition: 51 + bannerTopHeight,
-                    % else:
-                    stickToTopPosition: 76 + bannerTopHeight,
-                    % endif
-                    clonedContainerPosition: 'fixed',
-                    app: 'metastore'
-                  });
-                  $(selector).jHueHorizontalScrollbar();
-                },
-                "aoColumnDefs": [
-                  {
-                    "sType": "numeric",
-                    "aTargets": [ "sort-numeric" ]
-                  },
-                  {
-                    "sType": "string",
-                    "aTargets": [ "sort-string" ]
-                  },
-                  {
-                    "sType": "date",
-                    "aTargets": [ "sort-date" ]
-                  }
-                ]
-              });
-            });
-          }
-        }
-      });
-
-      viewModel.scrollToColumn = function (col) {
-        if (!col.table.samples.loading()) {
-          $('.page-content').scrollTop(0);
-          viewModel.currentTab('sample');
-          hueUtils.waitForRendered('#sampleTable', function (el) {
-            return el.parent().hasClass('dataTables_wrapper')
-          }, function () {
-            var sampleTable = $('#sampleTable');
-            var sampleCol = sampleTable.find('th').filter(function () {
-              return $.trim($(this).text()).indexOf(col.catalogEntry.name) > -1;
-            });
-            sampleTable.find('.columnSelected').removeClass('columnSelected');
-            sampleTable.find('tr td:nth-child(' + (sampleCol.index() + 1) + ')').addClass('columnSelected');
-            var scrollLeft = 0;
-            sampleTable.find('th:lt(' + sampleCol.index() + ')').each(function () {
-              scrollLeft += $(this).outerWidth();
-            });
-            scrollLeft = Math.max(0, scrollLeft - 40);
-            sampleTable.parent().scrollLeft(scrollLeft);
-            sampleTable.parent().trigger('scroll_update');
-          });
-        }
-      };
-
-      ko.applyBindings(viewModel, $('#metastoreComponents')[0]);
-
-      huePubSub.subscribe('cluster.config.set.config', function (clusterConfig) {
-        viewModel.appConfig(clusterConfig && clusterConfig['app_config']);
-      });
-      huePubSub.publish('cluster.config.get.config');
-
-      if (location.getParameter('refresh') === 'true') {
-        dataCatalog.getEntry({ namespace: viewModel.source().namespace().namespace, compute: viewModel.source().namespace().compute, sourceType: viewModel.source().type, path: [], definition: { type: 'source' }}).done(function (entry) {
-          entry.clearCache({ invalidate: viewMode.source().type === 'impala' ? 'invalidate' : 'cache', silenceErrors: true });
-          hueUtils.replaceURL('?');
-        });
-      }
-    });
-  })();
 </script>
 </span>
 
